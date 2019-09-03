@@ -1,0 +1,32 @@
+{
+  "name": "slim-list-lambda",
+  "version": "1.0.0",
+  "description": "AWS Lambda functions to generate slim list versions of filter lists.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brave-experiments/slim-list-lambda.git"
+  },
+  "author": "Peter Snyder <pes@brave.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/brave-experiments/slim-list-lambda/issues"
+  },
+  "homepage": "https://github.com/brave-experiments/slim-list-lambda#readme",
+  "dependencies": {
+    "adblock-rs": "^0.1.32",
+    "aws-sdk": "^2.518.0",
+    "eslint": "^6.2.2",
+    "fs-extra": "^8.1.0",
+    "glob": "^7.1.4",
+    "puppeteer-extra-plugin-stealth": "^2.2.2",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4",
+    "request-promise-native": "^1.0.7",
+    "uuid": "^3.3.3",
+    "valid-url": "^1.0.9"
+  }
+}

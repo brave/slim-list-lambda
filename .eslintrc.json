@@ -1,0 +1,35 @@
+{
+    "env": {
+        "browser": true,
+        "es6": true,
+        "webextensions": true,
+        "node": true,
+        "mocha": true
+    },
+    "extends": [
+        "eslint:recommended"
+    ],
+    "rules": {
+        "no-console": "off",
+        "no-unused-vars": ["error", {"argsIgnorePattern": "_"}],
+        "semi": ["error", "always"],
+        "indent": ["error", 4, {"SwitchCase": 1}],
+        "eol-last": "error",
+        "quotes": ["error", "double", {"allowTemplateLiterals": true}],
+        "function-paren-newline": ["error"],
+        "max-len": ["error", {
+            "ignoreStrings": true,
+            "code": 100,
+            "ignoreTemplateLiterals": true
+        }],
+        "prefer-const": "error",
+        "no-template-curly-in-string": "error",
+        "no-unused-expressions": "error",
+        "no-trailing-spaces": "error",
+        "padded-blocks": ["error", "never"],
+        "comma-dangle": ["error", "always-multiline"]
+    },
+    "parserOptions": {
+        "ecmaVersion": 2017
+    }
+}
