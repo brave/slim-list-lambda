@@ -1,12 +1,13 @@
-"use strict";
+'use strict'
 
-const requestPromiseLib = require("request-promise");
+const requestPromiseLib = require('request-promise')
+const adblockRsLib = require('adblock-rs')
 
-const braveDebugLib = require("../debug");
-const braveHashLib = require("../hash");
-const braveS3Lib = require("../s3");
-const braveValidationLib = require("../validation");
-
+const braveDebugLib = require('../debug')
+const braveHashLib = require('../hash')
+const braveS3Lib = require('../s3')
+const braveSQSLib = require('../sqs')
+const braveValidationLib = require('../validation')
 
 /**
  * @file
@@ -65,76 +66,76 @@ const braveValidationLib = require("../validation");
  *   the crawl.
  */
 const validateArgs = async inputArgs => {
-    const genUuid4 = require("uuid/v4");
-    const isString = braveValidationLib.ofTypeAndTruthy.bind(undefined, "string");
-    const isAllString = braveValidationLib.allOfTypeAndTruthy.bind(undefined, "string");
+  const genUuid4 = require('uuid/v4')
+  const isString = braveValidationLib.ofTypeAndTruthy.bind(undefined, 'string')
+  const isAllString = braveValidationLib.allOfTypeAndTruthy.bind(undefined, 'string')
 
-    const validationRules = {
-        listS3Bucket: {
-            validate: isString,
-            default: undefined,
-        },
-        listS3Key: {
-            validate: isString,
-            default: undefined,
-        },
-        destS3Bucket: {
-            validate: isString,
-            default: "com.brave.research.slim-list",
-        },
-        sqsQueue: {
-            validate: isString,
-            default: "com.brave.research.slim-list",
-        },
-        lists: {
-            validate: isAllString,
-            default: [
-                "https://easylist.to/easylist/easylist.txt",
-                "https://easylist.to/easylist/easyprivacy.txt",
-            ],
-        },
-        batch: {
-            validate: isString,
-            default: genUuid4,
-        },
-        count: {
-            validate: braveValidationLib.isPositiveNumber,
-            default: 1000,
-        },
-        tags: {
-            validate: isAllString,
-            default: [],
-        },
-        depth: {
-            validate: braveValidationLib.isPositiveNumber,
-            default: 2,
-        },
-        breath: {
-            validate: braveValidationLib.isPositiveNumber,
-            default: 3,
-        },
-        urls: {
-            validate: isAllString,
-            default: undefined,
-        },
-    };
-
-    const [isValid, msg] = braveValidationLib.applyValidationRules(
-        inputArgs, validationRules);
-
-    if (isValid === false) {
-        return [false, msg];
+  const validationRules = {
+    listS3Bucket: {
+      validate: isString,
+      default: undefined
+    },
+    listS3Key: {
+      validate: isString,
+      default: undefined
+    },
+    destS3Bucket: {
+      validate: isString,
+      default: 'com.brave.research.slim-list'
+    },
+    sqsQueue: {
+      validate: isString,
+      default: 'com.brave.research.slim-list'
+    },
+    lists: {
+      validate: isAllString,
+      default: [
+        'https://easylist.to/easylist/easylist.txt',
+        'https://easylist.to/easylist/easyprivacy.txt'
+      ]
+    },
+    batch: {
+      validate: isString,
+      default: genUuid4
+    },
+    count: {
+      validate: braveValidationLib.isPositiveNumber,
+      default: 1000
+    },
+    tags: {
+      validate: isAllString,
+      default: []
+    },
+    depth: {
+      validate: braveValidationLib.isPositiveNumber,
+      default: 2
+    },
+    breath: {
+      validate: braveValidationLib.isPositiveNumber,
+      default: 3
+    },
+    urls: {
+      validate: isAllString,
+      default: undefined
     }
+  }
 
-    if (msg.urls === undefined) {
-        delete msg.urls;
-    } else {
-        delete msg.countryCode;
-        delete msg.count;
-    }
+  const [isValid, msg] = braveValidationLib.applyValidationRules(
+    inputArgs, validationRules)
 
-    return [true, Object.freeze(msg)];
-};
+  if (isValid === false) {
+    return [false, msg]
+  }
+
+  if (msg.urls === undefined) {
+    delete msg.urls
+  } else {
+    delete msg.countryCode
+    delete msg.count
+  }
+
+  return [true, Object.freeze(msg)]
+}
 
 /**
  * This lambda action does several things:
@@ -149,36 +150,73 @@ const validateArgs = async inputArgs => {
  *     the SQS queue.
  */
 const start = async args => {
-    let urlsToCrawl = args.urls;
-    const manifest = Object.create(null);
-    manifest.date = (new Date()).toISOString();
-    manifest.count = args.count;
-    
-    if (urlsToCrawl === undefined) {
-        urlsToCrawl = await braveS3Lib
-            .read(args.listS3Bucket, args.listS3Key)
-            .toString("utf8")
-            .split("\n");
-        manifest.urlsSource = `s3://${args.listS3Bucket}/${args.listS3Key}`;
-    } else {
-        manifest.urlsSource = "inline";
-    }
-    manifest.urlsList = urlsToCrawl;
-    
-    const filterListUrlHashMap = Object.create(null);
-    const filterListHashTextMap = Object.create(null);
-    for (const filterListUrl of args.lists) {
-        braveDebugLib.log("Fetching filter list: " + filterListUrl);
-        const filterListText = await requestPromiseLib(filterListUrl);
-        const filterListHash = braveHashLib.sha256(filterListText);
-        filterListUrlHashMap[filterListUrl] = filterListHash;
-        filterListHashTextMap[filterListHash] = filterListText;
-    }
+  let urlsToCrawl = args.urls
+  const manifest = Object.create(null)
+  manifest.date = (new Date()).toISOString()
+  manifest.count = args.count
+  manifest.batch = args.batch
 
-    manifest.filterLists = filterListUrlHashMap;
-};
+  if (urlsToCrawl === undefined) {
+    urlsToCrawl = await braveS3Lib
+      .read(args.listS3Bucket, args.listS3Key)
+      .toString('utf8')
+      .split('\n')
+    manifest.urlsSource = `s3://${args.listS3Bucket}/${args.listS3Key}`
+  } else {
+    manifest.urlsSource = 'inline'
+  }
+
+  const filterListUrlHashMap = Object.create(null)
+  const filterListHashTextMap = Object.create(null)
+  for (const filterListUrl of args.lists) {
+    braveDebugLib.log('Fetching filter list: ' + filterListUrl)
+    const filterListText = await requestPromiseLib(filterListUrl)
+    const filterListHash = braveHashLib.sha256(filterListText)
+    filterListUrlHashMap[filterListUrl] = filterListHash
+    filterListHashTextMap[filterListHash] = filterListText
+  }
+
+  manifest.filterLists = filterListUrlHashMap
+
+  const combinedRules = Object
+    .values(filterListHashTextMap)
+    .reduce((combined, current) => {
+      return combined.concat(current.split('\n'))
+    }, [])
+
+  const adblockDat = (new adblockRsLib.Engine(combinedRules)).serialize()
+  const adblockDatBuffer = Buffer.from(adblockDat)
+
+  await braveS3Lib.write(args.destS3Bucket, `${args.batch}/manifest.json`,
+    JSON.stringify(manifest))
+
+  for (const filterListHash of filterListHashTextMap) {
+    await braveS3Lib.write(args.destS3Bucket,
+      `${args.batch}/${filterListHash}`,
+      filterListHashTextMap[filterListHash])
+  }
+
+  await braveS3Lib.write(args.destS3Bucket, `${args.batch}/urls.txt`,
+    urlsToCrawl.join('\n'))
+  await braveS3Lib.write(args.destS3Bucket, `${args.batch}/rules.dat`,
+    adblockDatBuffer)
+
+  for (const aDomain of urlsToCrawl) {
+    const jobDesc = Object.create(null)
+    jobDesc.batch = args.batch
+    jobDesc.url = `http://${aDomain}`
+    jobDesc.domain = aDomain
+    jobDesc.depth = args.depth
+    jobDesc.currentDepth = 1
+    jobDesc.breath = args.breath
+    jobDesc.currentBreath = 1
+    jobDesc.bucket = args.destS3Bucket
+    jobDesc.sqsQueue = args.sqsQueue
+    await braveSQSLib.write(args.sqsQueue, JSON.stringify(jobDesc))
+  }
+}
 
 module.exports = {
-    validateArgs,
-    start,
-};
+  validateArgs,
+  start
+}
