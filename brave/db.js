@@ -257,7 +257,9 @@ const popularExceptionRules = async (client, earliestTimestamp, maxRules) => {
     JOIN
       pages AS p ON (p.batch_id = b.id)
     JOIN
-      requests AS r ON (r.page_id = pages.id)
+      frames AS f ON (f.page_id = p.id)
+    JOIN
+      requests AS r ON (r.frame_id = f.id)
     WHERE
       b.created_on >= $1 AND
       r.excepting_rule_id IS NOT NULL
@@ -291,7 +293,9 @@ const popularBlockingRules = async (client, earliestTimestamp, maxRules) => {
     JOIN
       pages AS p ON (p.batch_id = b.id)
     JOIN
-      requests AS r ON (r.page_id = pages.id)
+      frames AS f ON (f.page_id = p.id)
+    JOIN
+      requests AS r ON (r.frame_id = f.id)
     WHERE
       b.created_on >= $1 AND
       r.rule_id IS NOT NULL
