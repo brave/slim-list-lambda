@@ -248,8 +248,78 @@ const recordPage = async (client, batch, domain, pageUrl, depth, breath, pageTim
   }
 }
 
+const popularExceptionRules = async (client, earliestTimestamp, maxRules) => {
+  const selectQuery = `
+    SELECT
+      r.id
+    FROM
+      batches AS b
+    JOIN
+      pages AS p ON (p.batch_id = b.id)
+    JOIN
+      requests AS r ON (r.page_id = pages.id)
+    WHERE
+      b.created_on >= $1 AND
+      r.excepting_rule_id IS NOT NULL
+    GROUP BY
+      r.id
+    ORDER BY
+      COUNT(*) DESC
+    LIMIT
+      ${maxRules};`
+
+  const selectRs = await client.query(selectQuery, [earliestTimestamp])
+  const ruleIds = selectRs.rows.map(row => row.id)
+
+  const ruleSelectQuery = `
+    SELECT
+      r.rule
+    FROM
+      rules AS r
+    WHERE
+      r.id IN (${ruleIds.split(',')})`
+  const ruleSelectRs = await client.query(ruleSelectQuery, [])
+  return ruleSelectRs.rows.map(row => row.rule)
+}
+
+const popularBlockingRules = async (client, earliestTimestamp, maxRules) => {
+  const selectQuery = `
+    SELECT
+      r.id
+    FROM
+      batches AS b
+    JOIN
+      pages AS p ON (p.batch_id = b.id)
+    JOIN
+      requests AS r ON (r.page_id = pages.id)
+    WHERE
+      b.created_on >= $1 AND
+      r.rule_id IS NOT NULL
+    GROUP BY
+      r.id
+    ORDER BY
+      COUNT(*) DESC
+    LIMIT
+      ${maxRules};`
+
+  const selectRs = await client.query(selectQuery, [earliestTimestamp])
+  const ruleIds = selectRs.rows.map(row => row.id)
+
+  const ruleSelectQuery = `
+    SELECT
+      r.rule
+    FROM
+      rules AS r
+    WHERE
+      r.id IN (${ruleIds.split(',')})`
+  const ruleSelectRs = await client.query(ruleSelectQuery, [])
+  return ruleSelectRs.rows.map(row => row.rule)
+}
+
 module.exports = {
   getClient,
+  popularExceptionRules,
+  popularBlockingRules,
   recordBatchWithTags,
   recordFilterRules,
   recordPage

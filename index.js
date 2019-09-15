@@ -20,15 +20,10 @@ const dispatch = async lambdaEvent => {
 
     switch (lambdaEvent.action) {
       case 'start':
-        lambdaModule = require('./brave/lambda_actions/start')
-        break
-
       case 'crawl':
-        lambdaModule = require('./brave/lambda_actions/crawl')
-        break
-
       case 'record':
-        lambdaModule = require('./brave/lambda_actions/record')
+      case 'build':
+        lambdaModule = require(`./brave/lambda_actions/${lambdaEvent.action}`)
         break
 
       default:

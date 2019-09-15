@@ -53,7 +53,7 @@ const applyBlockingRules = (adblockClient, requests) => {
   const result = Object.create(null)
   result.allowed = allowed
   result.blocked = blocked
-  return result
+  return Object.freeze(result)
 }
 
 module.exports = {

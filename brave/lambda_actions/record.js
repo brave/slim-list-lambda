@@ -67,14 +67,13 @@ const start = async args => {
     `${args.batch}/urls.json`)
   const domains = JSON.parse(domainBuffer.toString('utf8'))
   const domainIndex = args.index
-
   const isLastDomain = domainIndex === (domains.length - 1)
   const currentDomain = domains[domainIndex]
 
   const rulesData = await braveS3Lib.read(args.bucket,
     `${args.batch}/rules.dat`)
-
   const adBlockClient = braveAdBlockLib.createClient(rulesData)
+
   const dbClient = await braveDbLib.getClient()
 
   const keyPrefix = `${args.batch}/data/${currentDomain}/`
