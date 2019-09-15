@@ -14,6 +14,24 @@ const globalS3 = new awsSdkLib.S3({
   region: 'us-east-1'
 })
 
+const list = async (bucket, prefix) => {
+  debugLib.log(`Listing items in S3: s3://${bucket}/${prefix}/*`)
+  const s3Query = {
+    Bucket: bucket,
+    Prefix: prefix
+  }
+
+  const result = await globalS3.listObjectsV2(s3Query).promise()
+  debugLib.log(`Received ${result.KeyCount} results in S3 for query.`)
+
+  const matchingKeys = []
+  for (const object of result.Contents) {
+    matchingKeys.push(object.Key)
+  }
+
+  return matchingKeys
+}
+
 const read = async (bucket, key) => {
   debugLib.log(`Reading from S3: s3://${bucket}/${key}`)
   const s3Query = {
@@ -41,6 +59,7 @@ const write = async (bucket, key, bufferOrString) => {
 }
 
 module.exports = {
+  list,
   read,
   write
 }

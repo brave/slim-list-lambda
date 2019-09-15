@@ -1,8 +1,9 @@
 'use strict'
 
 const requestPromiseLib = require('request-promise')
-const adblockRsLib = require('adblock-rs')
 
+const braveAdBlockLib = require('../adblock')
+const braveDbLib = require('../db')
 const braveDebugLib = require('../debug')
 const braveHashLib = require('../hash')
 const braveS3Lib = require('../s3')
@@ -23,9 +24,9 @@ const braveValidationLib = require('../validation')
  * filling in optional arguments, etc.
  *
  * These arguments are optional and have defaults.
- *  - url {array.string}
- *      An array of URLs to crawl.  If this is provided, then the arguments
- *      about fetching URL lists (listS3Bucket, listS3Key) are ignored.
+ *  - domains {array.string}
+ *      An array of domains to crawl.  If this is provided, then the arguments
+ *      about fetching domain lists (listS3Bucket, listS3Key) are ignored.
  *  - listS3Bucket {string}
  *      If provided, the name of the S3 bucket that list data will be
  *      pulled from.  This is ignored if `url` is provided.
@@ -114,7 +115,7 @@ const validateArgs = async inputArgs => {
       validate: braveValidationLib.isPositiveNumber,
       default: 3
     },
-    urls: {
+    domains: {
       validate: isAllString,
       default: undefined
     }
@@ -150,42 +151,48 @@ const validateArgs = async inputArgs => {
  *     the SQS queue.
  */
 const start = async args => {
-  let urlsToCrawl = args.urls
+  let domainsToCrawl = args.urls
   const manifest = Object.create(null)
   manifest.date = (new Date()).toISOString()
   manifest.count = args.count
   manifest.batch = args.batch
 
-  if (urlsToCrawl === undefined) {
-    urlsToCrawl = await braveS3Lib
+  if (domainsToCrawl === undefined) {
+    domainsToCrawl = await braveS3Lib
       .read(args.listS3Bucket, args.listS3Key)
       .toString('utf8')
       .split('\n')
-    manifest.urlsSource = `s3://${args.listS3Bucket}/${args.listS3Key}`
+    manifest.domainsSource = `s3://${args.listS3Bucket}/${args.listS3Key}`
   } else {
-    manifest.urlsSource = 'inline'
+    manifest.domainsSource = 'inline'
   }
+
+  // Record batch information to the database.
+  const dbClient = await braveDbLib.getClient()
+  await braveDbLib.recordBatchWithTags(dbClient, args.batch, manifest.date,
+    args.tags)
 
   const filterListUrlHashMap = Object.create(null)
   const filterListHashTextMap = Object.create(null)
   for (const filterListUrl of args.lists) {
     braveDebugLib.log('Fetching filter list: ' + filterListUrl)
-    const filterListText = await requestPromiseLib(filterListUrl)
+    const filterListText = await requestPromiseLib(filterListUrl).trim()
     const filterListHash = braveHashLib.sha256(filterListText)
+    const filterListFetchTimestamp = (new Date()).toISOString()
     filterListUrlHashMap[filterListUrl] = filterListHash
     filterListHashTextMap[filterListHash] = filterListText
+    await braveDbLib.recordFilterRules(dbClient, filterListUrl,
+      filterListFetchTimestamp, filterListHash, filterListText.split('\n'))
   }
 
   manifest.filterLists = filterListUrlHashMap
+  manifest.tags = args.tags
 
   const combinedRules = Object
     .values(filterListHashTextMap)
     .reduce((combined, current) => {
       return combined.concat(current.split('\n'))
     }, [])
-
-  const adblockDat = (new adblockRsLib.Engine(combinedRules)).serialize()
-  const adblockDatBuffer = Buffer.from(adblockDat)
 
   await braveS3Lib.write(args.destS3Bucket, `${args.batch}/manifest.json`,
     JSON.stringify(manifest))
@@ -196,12 +203,14 @@ const start = async args => {
       filterListHashTextMap[filterListHash])
   }
 
-  await braveS3Lib.write(args.destS3Bucket, `${args.batch}/urls.txt`,
-    urlsToCrawl.join('\n'))
-  await braveS3Lib.write(args.destS3Bucket, `${args.batch}/rules.dat`,
-    adblockDatBuffer)
+  await braveS3Lib.write(args.destS3Bucket, `${args.batch}/domains.json`,
+    JSON.stringify(domainsToCrawl))
 
-  for (const aDomain of urlsToCrawl) {
+  const adBlockDat = braveAdBlockLib.serializeRules(combinedRules)
+  await braveS3Lib.write(args.destS3Bucket, `${args.batch}/rules.dat`,
+    adBlockDat)
+
+  for (const aDomain of domainsToCrawl) {
     const jobDesc = Object.create(null)
     jobDesc.batch = args.batch
     jobDesc.url = `http://${aDomain}`

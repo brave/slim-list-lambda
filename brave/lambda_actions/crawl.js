@@ -8,8 +8,10 @@ const randomJsLib = require('random-js')
 const tldjsLib = require('tldjs')
 const validUrlLib = require('valid-url')
 
+const braveHashLib = require('../hash')
 const braveResourcesLib = require('../resources')
 const braveSQSLib = require('../sqs')
+const braveS3Lib = require('../s3')
 const braveValidationLib = require('../validation')
 
 /**
@@ -128,13 +130,16 @@ const selectETldPlusOneLinks = async (page, count = 3) => {
   return randomJsLib.sample(uniqueChildUrls, count)
 }
 
-const onRequestCallback = (requestStore, interceptedRequest) => {
-  const requestType = interceptedRequest.resourceType()
-  const requestUrl = interceptedRequest.url()
+const onRequestCallback = async (requestStore, interceptedRequest) => {
   const frame = interceptedRequest.frame()
   if (frame !== null) {
     return
   }
+
+  const requestType = interceptedRequest.resourceType()
+  const requestUrl = interceptedRequest.url()
+  const buffer = await interceptedRequest.buffer()
+  const responseHash = braveHashLib.sha256(buffer)
 
   const frameId = frame._id
   const frameUrl = frame.url()
@@ -142,7 +147,8 @@ const onRequestCallback = (requestStore, interceptedRequest) => {
   const dateString = (new Date()).toISOString()
 
   requestStore.push(
-    [dateString, parentFrameId, frameId, frameUrl, requestType, requestUrl])
+    [dateString, parentFrameId, frameId, frameUrl, requestType, requestUrl,
+      responseHash])
 }
 
 const start = async args => {
@@ -197,7 +203,14 @@ const start = async args => {
   }
 
   // Finally, write our results in S3.
-  // @tbd
+  const s3Key = `${args.batch}/data/${args.domain}/${args.depth}-${args.breath}.json`
+  const crawlData = Object.create(null)
+  crawlData.url = args.url
+  crawlData.data = report
+  crawlData.breath = args.breath
+  crawlData.depth = args.depth
+  crawlData.timestamp = (new Date()).toISOString
+  await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData))
 }
 
 module.exports = {

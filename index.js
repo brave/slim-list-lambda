@@ -1,5 +1,6 @@
 'use strict'
 
+const braveDebugLib = require('./brave/debug')
 const braveLambdaLib = require('./brave/lambda')
 
 const dispatch = async lambdaEvent => {
@@ -15,14 +16,19 @@ const dispatch = async lambdaEvent => {
       return
     }
 
+    let lambdaModule
+
     switch (lambdaEvent.action) {
       case 'start':
+        lambdaModule = require('./brave/lambda_actions/start')
         break
 
       case 'crawl':
+        lambdaModule = require('./brave/lambda_actions/crawl')
         break
 
-      case 'aggregate':
+      case 'record':
+        lambdaModule = require('./brave/lambda_actions/record')
         break
 
       default:
@@ -30,8 +36,21 @@ const dispatch = async lambdaEvent => {
                     lambdaEvent.action)
         return
     }
+
+    const [areValidArgs, msg] = await lambdaModule.validatedArgs()
+    if (areValidArgs === false) {
+      braveDebugLib.log(`Invalid arguments for action: ${lambdaEvent.action}`)
+      braveDebugLib.log(`Received: ${JSON.stringify(lambdaEvent)}`)
+      braveDebugLib.log(`Error: ${msg}`)
+      throw msg
+    }
+
+    braveDebugLib.verbose(`Starting action: ${lambdaEvent.action}`)
+    braveDebugLib.verbose(`Args: ${JSON.stringify(lambdaEvent)}`)
+    await lambdaModule.start(msg)
   } catch (error) {
     console.log(error)
+    throw error
   }
 }
 
