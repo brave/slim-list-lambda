@@ -29,17 +29,17 @@ const braveValidationLib = require('../validation')
  *      about fetching domain lists (listS3Bucket, listS3Key) are ignored.
  *  - listS3Bucket {string}
  *      If provided, the name of the S3 bucket that list data will be
- *      pulled from.  This is ignored if `url` is provided.
+ *      pulled from.  This is ignored if `domains` is provided.
  *  - listS3Key {string}
  *      The key to read out of the `listS3Bucket` to fetch lists of domains
  *      to crawl.  This is ignored if `url` is provided.
  *  - destS3Bucket {string}
  *      The S3 bucket to use for recording information into.  Defaults
- *      to com.brave.research.slim-list
+ *      to `com.brave.research.slim-list`.
  *  - sqsQueue {string}
  *      The SQS queue to write any additional information into.  This will
  *      be used to push any domains / URLs that should be crawled into.
- *      Defaults to "com.brave.research.slim-list".
+ *      Defaults to `comBraveResearchSlim-list`.
  *  - lists {array.string}
  *      A list of filter lists to measure on this batch.  By default uses
  *      ["https://easylist.to/easylist/easylist.txt",
@@ -86,7 +86,7 @@ const validateArgs = async inputArgs => {
     },
     sqsQueue: {
       validate: isString,
-      default: 'com.brave.research.slim-list'
+      default: 'comBraveResearchSlim-list'
     },
     lists: {
       validate: isAllString,
@@ -151,7 +151,7 @@ const validateArgs = async inputArgs => {
  *     the SQS queue.
  */
 const start = async args => {
-  let domainsToCrawl = args.urls
+  let domainsToCrawl = args.domains
   const manifest = Object.create(null)
   manifest.date = (new Date()).toISOString()
   manifest.count = args.count

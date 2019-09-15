@@ -6,7 +6,7 @@ TMP_RESROUCES := $(TMP_WORKSPACE)/resources
 CHROME_DRIVER_URL := https://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip
 CHROME_HEADLESS_URL := https://github.com/adieuadieu/serverless-chrome/releases/download/v1.0.0-38/stable-headless-chromium-amazonlinux-2017-03.zip
 
-FUNCTION_NAME=brave-abp-measurer
+FUNCTION_NAME=slim-list-generator
 FUNCTION_S3_BUCKET=abp-lambda-funcs20181113170947211800000001
 
 clean:
@@ -16,7 +16,7 @@ install:
 	npm install
 
 install-lambda:
-	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs8.10 npm install
+	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs10.x npm install
 
 lite-build:
 	cp -r lib index.js $(TMP_WORKSPACE)

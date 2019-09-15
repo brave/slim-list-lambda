@@ -107,7 +107,8 @@ const start = async args => {
     batch: args.batch,
     bucket: args.bucket,
     lambdaFunc: args.lambdaFunc,
-    index: args.index + 1
+    index: args.index + 1,
+    action: 'record'
   }
   await braveLambdaLib.invoke(args.lambdaFunc, lambdaArgs)
 }
