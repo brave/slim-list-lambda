@@ -10,20 +10,21 @@ FUNCTION_NAME=slim-list-generator
 FUNCTION_S3_BUCKET=abp-lambda-funcs20181113170947211800000001
 
 clean:
+	rm -rf node_modules/
 	rm -rf $(TMP_WORKSPACE)
 
 install:
 	npm install
 
 install-lambda:
-	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs10.x npm install
+	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs10.x curl https://sh.rustup.rs -sSf | sh && source '~/.cargo/env' || npm install
 
 lite-build:
-	cp -r lib index.js $(TMP_WORKSPACE)
+	cp -r brave index.js $(TMP_WORKSPACE)
 
-build: clean install-lambda
+bundle:
 	mkdir -p $(TMP_WORKSPACE)/resources/
-	cp -r lib node_modules index.js $(TMP_WORKSPACE)/
+	cp -r brave node_modules index.js $(TMP_WORKSPACE)/
 	rm -rf $(TMP_WORKSPACE)/node_modules/aws-sdk
 	find $(TMP_WORKSPACE) -type d -name depot_tools | xargs rm -rf
 	rm -rf $(TMP_WORKSPACE)/node_modules/ad-block/test
@@ -50,6 +51,8 @@ build: clean install-lambda
 	unzip $(TMP_WORKSPACE)/resources/chromium_headless.zip -d $(TMP_WORKSPACE)/resources/
 	rm $(TMP_WORKSPACE)/resources/chromium_headless.zip
 	cd $(TMP_WORKSPACE)/ && zip -r $(FUNCTION_NAME).zip *
+
+build: clean install-lambda bundle
 
 test:
 	docker run -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
