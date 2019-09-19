@@ -17,7 +17,7 @@ install:
 	npm install
 
 install-lambda:
-	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs10.x curl https://sh.rustup.rs -sSf | sh && source '~/.cargo/env' || npm install
+	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs10.x ./build.sh
 
 lite-build:
 	cp -r brave index.js $(TMP_WORKSPACE)
@@ -42,6 +42,7 @@ bundle:
 	rm -rf $(TMP_WORKSPACE)/node_modules/core-js/client
 	rm -rf $(TMP_WORKSPACE)/node_modules/core-js/stage
 	rm -rf $(TMP_WORKSPACE)/node_modules/nan
+	find $(TMP_WORKSPACE)/node_modules/adblock-rs/native/target/release/ -type f -not -name libadblock_rs.so -delete
 	find $(TMP_WORKSPACE)/node_modules -type f -name "*.md" -delete
 	find $(TMP_WORKSPACE)/node_modules -type d -name "test" | xargs rm -rf
 	curl -L $(CHROME_DRIVER_URL) --output $(TMP_WORKSPACE)/resources/chromedriver.zip
