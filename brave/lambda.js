@@ -1,6 +1,6 @@
 'use strict'
 
-const fsLib = require('fs')
+const fsLib = require('fs-extra')
 const utilLib = require('util')
 
 const awsSdkLib = require('aws-sdk')
