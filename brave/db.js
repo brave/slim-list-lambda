@@ -37,7 +37,7 @@ const _insertWithId = async (client, table, colToValueMap) => {
     queryPlaceHolders.push('$' + queryPlaceHolderIndex.toString())
   }
 
-  const insertQuery = `INSERT INTO ${table}(${keys.join(',')}) VALUE (${queryPlaceHolders.join(',')}) RETURNING id;`
+  const insertQuery = `INSERT INTO ${table}(${keys.join(',')}) VALUES (${queryPlaceHolders.join(',')}) RETURNING id;`
 
   braveDebugLib.verbose(`Inserting into ${table}: ${JSON.stringify(colToValueMap)}`)
   const insertRs = await client.query(insertQuery, values)
@@ -50,10 +50,10 @@ const _makeGetIdFunc = (table, textColumn, useHash, client, value) => {
 
   if (useHash === true) {
     queryColumn = 'sha256'
-    insertQuery = `INSERT INTO ${table}(${textColumn}, sha256) VALUE ($1, $2) RETURNING id;`
+    insertQuery = `INSERT INTO ${table}(${textColumn}, sha256) VALUES ($1, $2) RETURNING id;`
   } else {
     queryColumn = textColumn
-    insertQuery = `INSERT INTO ${table}(${textColumn}) VALUE ($1) RETURNING id;`
+    insertQuery = `INSERT INTO ${table}(${textColumn}) VALUES ($1) RETURNING id;`
   }
 
   const selectQuery = `SELECT id FROM ${table} WHERE ${queryColumn} = $1 LIMIT 1;`
@@ -133,35 +133,92 @@ const recordBatchWithTags = async (client, batch, timestamp, tags) => {
   return batchId
 }
 
-const _filterListAlreadyRecorded = async (client, filterListHash) => {
+const _idForExistingFilterList = async (client, filterListHash) => {
   braveDebugLib.verbose(`Checking to see if filter list hash=${filterListHash} already exists`)
   const selectQuery = 'SELECT id FROM filter_lists WHERE sha256 = $1 LIMIT 1;'
   const selectParams = [filterListHash]
   const selectRs = await client.query(selectQuery, selectParams)
   return (selectRs.rows && selectRs.rows.length === 1)
+    ? selectRs.rows[0].id
+    : undefined
+}
+
+const _idsForRulesForList = async (client, rules, listId) => {
+  braveDebugLib.verbose('About to record ' + rules.length + ' filter rules for this list')
+  const insertParams = []
+  const insertTerms = []
+  const hashTerms = []
+  let index = 0
+  Array.from(new Set(rules)).forEach(rule => {
+    const ruleHash = braveHashLib.sha256(rule)
+    insertParams.push(rule)
+    hashTerms.push(`'${ruleHash}'`)
+    insertTerms.push(`($${++index}::text, '${ruleHash}')`)
+  })
+
+  const insertQuery = `
+    INSERT INTO
+      rules (rule, sha256)
+    VALUES
+      ${insertTerms.join(',')}
+    ON CONFLICT (sha256) DO NOTHING;`
+  await client.query(insertQuery, insertParams)
+
+  const selectQuery = `
+    SELECT
+      id
+    FROM
+      rules
+    WHERE
+      sha256 IN (${hashTerms.join(',')})`
+  const selectRs = await client.query(selectQuery, [])
+
+  const joinQueryValues = []
+  for (const row of selectRs.rows) {
+    const ruleId = row.id
+    joinQueryValues.push(`(${listId}, ${ruleId})`)
+  }
+
+  const insertJoinQuery = `
+    INSERT INTO
+      filter_lists_rules(filter_list_id, rule_id)
+    VALUES
+      ${joinQueryValues.join(',')}`
+  await client.query(insertJoinQuery, [])
 }
 
 const recordFilterRules = async (client, filterListUrl, timestamp,
   filterListHash, rules) => {
-  const filterListAlreadyRecorded = await _filterListAlreadyRecorded(client, filterListHash)
+  const dateId = await _insertWithId(client, 'dates', {
+    timestamp: timestamp
+  })
+  const idForExistingFilterList = await _idForExistingFilterList(client, filterListHash)
+  if (idForExistingFilterList) {
+    await _insertWithId(client, 'dates_filter_lists', {
+      filter_list_id: idForExistingFilterList,
+      date_id: dateId
+    })
+    return
+  }
 
   const filterListUrlId = await _idForUrl(client, filterListUrl.trim())
   const filterListId = await _insertWithId(client, 'filter_lists', {
     url_id: filterListUrlId,
-    fetched_on: timestamp,
     sha256: filterListHash
   })
+  await _insertWithId(client, 'dates_filter_lists', {
+    filter_list_id: filterListId,
+    date_id: dateId
+  })
 
-  if (filterListAlreadyRecorded) {
-    return
-  }
+  // maximum number of rows to up-cert at the same time.
+  const chunkSize = 5000
+  const numChunks = Math.ceil(rules.length / chunkSize)
 
-  for (const aRule of rules) {
-    const aRuleId = await _idForRule(client, aRule.trim())
-    await _insertWithId(client, 'filter_lists_rules', {
-      filter_list_id: filterListId,
-      rule_id: aRuleId
-    })
+  for (let i = 0; i < numChunks; i += 1) {
+    const startIndex = i * chunkSize
+    const ruleChunk = rules.slice(startIndex, startIndex + chunkSize)
+    await _idsForRulesForList(client, ruleChunk, filterListId)
   }
 }
 

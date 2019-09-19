@@ -57,14 +57,9 @@ build: clean install-lambda bundle
 
 test:
 	docker run -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
-		-e AWS_REGION=$(AWS_REGION) -e PG_HOSTNAME="$(PG_HOSTNAME)" -e PG_PORT=5432 -e PG_USERNAME="abp" \
-		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 -it -v $(PWD)/$(TMP_WORKSPACE):/var/task lambci/lambda:nodejs8.10 index.dispatch \
-		'{"filtersUrls": [ "https://easylist.to/easylist/easylist.txt", "https://easylist.to/easylist/easyprivacy.txt", \
-		"https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/unbreak.txt", \
-		"https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt", \
-		"https://raw.githubusercontent.com/brave/adblock-lists/master/coin-miners.txt"], \
-		"batch": "1f366690-6e84-4a2b-b200-8e37b8c9d24a", "domain": "www.cnn.com", "rank": 8, "debug": true, "depth": 2, \
-		"breath": 3, "tags": [], "region": "global"}'
+		-e AWS_REGION=$(AWS_REGION) -e PG_HOSTNAME="$(PG_HOSTNAME)" -e PG_PORT=5432 -e PG_USERNAME="$(PG_USERNAME)" \
+		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 -it -v $(PWD)/$(TMP_WORKSPACE):/var/task lambci/lambda:nodejs10.x index.dispatch \
+		'{"action": "start", "domains": ["example.com"] }'
 
 deploy:
 	aws s3 cp $(TMP_WORKSPACE)/$(FUNCTION_NAME).zip s3://$(FUNCTION_S3_BUCKET)/$(FUNCTION_NAME).zip

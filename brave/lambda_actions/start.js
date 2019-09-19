@@ -176,7 +176,7 @@ const start = async args => {
   const filterListHashTextMap = Object.create(null)
   for (const filterListUrl of args.lists) {
     braveDebugLib.log('Fetching filter list: ' + filterListUrl)
-    const filterListText = await requestPromiseLib(filterListUrl).trim()
+    const filterListText = (await requestPromiseLib(filterListUrl)).trim()
     const filterListHash = braveHashLib.sha256(filterListText)
     const filterListFetchTimestamp = (new Date()).toISOString()
     filterListUrlHashMap[filterListUrl] = filterListHash
@@ -197,7 +197,7 @@ const start = async args => {
   await braveS3Lib.write(args.destS3Bucket, `${args.batch}/manifest.json`,
     JSON.stringify(manifest))
 
-  for (const filterListHash of filterListHashTextMap) {
+  for (const filterListHash of Object.keys(filterListHashTextMap)) {
     await braveS3Lib.write(args.destS3Bucket,
       `${args.batch}/${filterListHash}`,
       filterListHashTextMap[filterListHash])

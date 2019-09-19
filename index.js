@@ -32,7 +32,7 @@ const dispatch = async lambdaEvent => {
         return
     }
 
-    const [areValidArgs, msg] = await lambdaModule.validatedArgs()
+    const [areValidArgs, msg] = await lambdaModule.validateArgs(lambdaEvent)
     if (areValidArgs === false) {
       braveDebugLib.log(`Invalid arguments for action: ${lambdaEvent.action}`)
       braveDebugLib.log(`Received: ${JSON.stringify(lambdaEvent)}`)
