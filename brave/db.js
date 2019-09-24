@@ -253,7 +253,7 @@ const _recordAllowedRequest = async (client, pageId, timestamp, parentFrameId,
   await _insertWithId(client, 'requests', {
     url_id: requestUrlId,
     frame_id: dbFrameId,
-    resource_type_id: requestTypeId,
+    request_type_id: requestTypeId,
     is_blocked: false,
     rule_id: null,
     excepting_rule_id: null,
@@ -263,7 +263,7 @@ const _recordAllowedRequest = async (client, pageId, timestamp, parentFrameId,
 }
 
 const _recordBlockedRequest = async (client, pageId, timestamp, parentFrameId,
-  frameId, frameUrl, requestType, requestUrl, responseHash, blockingRule,
+  frameId, frameUrl, requestType, requestUrl, responseHash, ignore, blockingRule,
   exceptingRule) => {
   const frameUrlId = await _idForUrl(client, frameUrl.trim())
   const requestUrlId = await _idForUrl(client, requestUrl.trim())
@@ -284,7 +284,7 @@ const _recordBlockedRequest = async (client, pageId, timestamp, parentFrameId,
   await _insertWithId(client, 'requests', {
     url_id: requestUrlId,
     frame_id: dbFrameId,
-    resource_type_id: requestTypeId,
+    request_type_id: requestTypeId,
     is_blocked: true,
     rule_id: blockingRuleId,
     excepting_rule_id: exceptingRuleId,

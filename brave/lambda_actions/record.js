@@ -64,7 +64,7 @@ const validateArgs = async inputArgs => {
 
 const start = async args => {
   const domainBuffer = await braveS3Lib.read(args.bucket,
-    `${args.batch}/urls.json`)
+    `${args.batch}/domains.json`)
   const domains = JSON.parse(domainBuffer.toString('utf8'))
   const domainIndex = args.index
   const isLastDomain = domainIndex === (domains.length - 1)
@@ -82,7 +82,7 @@ const start = async args => {
     const aReportBuffer = await braveS3Lib.read(args.bucket, aReportObjectKey)
     const aReport = JSON.parse(aReportBuffer.toString('utf8'))
     const { url, data, breath, depth, timestamp } = aReport
-    const blockingResult = adBlockClient.applyBlockingRules(adBlockClient, data)
+    const blockingResult = braveAdBlockLib.applyBlockingRules(adBlockClient, data)
     await braveDbLib.recordPage(dbClient, args.batch, currentDomain, url,
       depth, breath, timestamp, blockingResult.allowed, blockingResult.blocked)
   }
@@ -113,7 +113,7 @@ const start = async args => {
   await braveLambdaLib.invoke(args.lambdaFunc, lambdaArgs)
 }
 
-module.export = {
+module.exports = {
   validateArgs,
   start
 }

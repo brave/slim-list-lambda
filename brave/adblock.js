@@ -17,9 +17,9 @@ const serializeRules = rules => {
   return adBlockDatBuffer
 }
 
-const createClient = adblockDat => {
+const createClient = adblockDatBuffer => {
   const adblockClient = new adblockRsLib.Engine([], true)
-  adblockClient.deserialize(adblockDat)
+  adblockClient.deserialize(new Uint8Array(adblockDatBuffer).buffer)
   return adblockClient
 }
 
