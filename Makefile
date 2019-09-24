@@ -3,8 +3,8 @@ SHELL := /bin/bash
 TMP_WORKSPACE := build/
 TMP_RESROUCES := $(TMP_WORKSPACE)/resources
 
-CHROME_DRIVER_URL := https://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip
-CHROME_HEADLESS_URL := https://github.com/adieuadieu/serverless-chrome/releases/download/v1.0.0-38/stable-headless-chromium-amazonlinux-2017-03.zip
+CHROME_DRIVER_URL := https://chromedriver.storage.googleapis.com/76.0.3809.126/chromedriver_linux64.zip
+CHROME_HEADLESS_URL := https://github.com/adieuadieu/serverless-chrome/releases/download/v1.0.0-55/stable-headless-chromium-amazonlinux-2017-03.zip
 
 FUNCTION_NAME=slim-list-generator
 FUNCTION_S3_BUCKET=abp-lambda-funcs20181113170947211800000001
@@ -17,7 +17,7 @@ install:
 	npm install
 
 install-lambda:
-	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs10.x ./build.sh
+	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs8.10 ./build.sh
 
 lite-build:
 	cp -r brave index.js $(TMP_WORKSPACE)
@@ -53,14 +53,19 @@ bundle:
 	rm $(TMP_WORKSPACE)/resources/chromium_headless.zip
 	cd $(TMP_WORKSPACE)/ && zip -r $(FUNCTION_NAME).zip *
 
-build: clean install-lambda bundle
-
-test:
-	docker run -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
+test-start:
+	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		-e AWS_REGION=$(AWS_REGION) -e PG_HOSTNAME="$(PG_HOSTNAME)" -e PG_PORT=5432 -e PG_USERNAME="$(PG_USERNAME)" \
-		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 -it -v $(PWD)/$(TMP_WORKSPACE):/var/task lambci/lambda:nodejs10.x index.dispatch \
+		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 -it -v $(PWD)/$(TMP_WORKSPACE):/var/task lambci/lambda:nodejs8.10 index.dispatch \
 		'{"action": "start", "domains": ["example.com"] }'
+
+test-crawl:
+	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) -e DEBUG=1 -e VERBOSE=1 -it -v \
+		$(PWD)/$(TMP_WORKSPACE):/var/task lambci/lambda:nodejs8.10 index.dispatch \
+		'{"action": "crawl", "url": "https://cnn.com", "depth": 2}'
 
 deploy:
 	aws s3 cp $(TMP_WORKSPACE)/$(FUNCTION_NAME).zip s3://$(FUNCTION_S3_BUCKET)/$(FUNCTION_NAME).zip
 	aws lambda update-function-code --function-name $(FUNCTION_NAME) --s3-bucket $(FUNCTION_S3_BUCKET) --s3-key $(FUNCTION_NAME).zip
+
+build: clean install-lambda bundle

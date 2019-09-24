@@ -2,12 +2,12 @@
 
 const urlLib = require('url')
 
-const puppeteerLib = require('puppeteer-extra')
-const puppeteerStealthLib = require('puppeteer-extra-plugin-stealth')
+const puppeteerLib = require('puppeteer-core')
 const randomJsLib = require('random-js')
 const tldjsLib = require('tldjs')
 const validUrlLib = require('valid-url')
 
+const braveDebugLib = require('../debug')
 const braveHashLib = require('../hash')
 const braveResourcesLib = require('../resources')
 const braveSQSLib = require('../sqs')
@@ -52,9 +52,30 @@ const braveValidationLib = require('../validation')
  *      The key in the bucket to store all information related to this crawl.
  *  - sqsQueue {string}
  *      The SQS queue to write any additional jobs into.
+ *
+ * Optional args:
+ *  - secs {number}
+ *      Number of milliseconds to let the page load (defaults to 30_000)
+ *  - path {array.number}
+ *      The "path" to where this crawl exists in the crawl.
  */
 const validateArgs = async inputArgs => {
   const stringCheck = braveValidationLib.ofTypeAndTruthy.bind(undefined, 'string')
+
+  if (braveDebugLib.isTestMode()) {
+    inputArgs.batch = 'testtest-test-test-test-testtesttest'
+    inputArgs.url = inputArgs.url || 'https://brave.com'
+    inputArgs.domain = 'brave.com'
+    inputArgs.depth = inputArgs.depth || 0
+    inputArgs.currentDepth = 0
+    inputArgs.breath = inputArgs.breath || 0
+    inputArgs.currentBreath = 0
+    inputArgs.bucket = 'com.brave.research.slim-list'
+    inputArgs.sqsQueue = 'https://sqs.us-east-1.amazonaws.com/275005321946/brave-slim-list'
+    inputArgs.secs = 5000
+    inputArgs.path = [0]
+  }
+
   const validationRules = {
     batch: {
       validate: braveValidationLib.isStringOfLength.bind(undefined, 36)
@@ -82,6 +103,13 @@ const validateArgs = async inputArgs => {
     },
     sqsQueue: {
       validate: stringCheck
+    },
+    secs: {
+      validate: braveValidationLib.isPositiveNumber,
+      default: 30000
+    },
+    path: {
+      default: [0]
     }
   }
 
@@ -127,19 +155,28 @@ const selectETldPlusOneLinks = async (page, count = 3) => {
     return uniqueChildUrls
   }
 
-  return randomJsLib.sample(uniqueChildUrls, count)
+  const random = new randomJsLib.Random()
+  return random.sample(uniqueChildUrls, count)
 }
 
-const onRequestCallback = async (requestStore, interceptedRequest) => {
-  const frame = interceptedRequest.frame()
-  if (frame !== null) {
+const onRequestCompleteCallback = async (requestStore, request) => {
+  const frame = request.frame()
+  if (frame === null) {
     return
   }
 
-  const requestType = interceptedRequest.resourceType()
-  const requestUrl = interceptedRequest.url()
-  const buffer = await interceptedRequest.buffer()
-  const responseHash = braveHashLib.sha256(buffer)
+  const requestUrl = request.url()
+  braveDebugLib.verbose(`Saw request to: ${requestUrl}`)
+
+  const requestType = request.resourceType()
+  const response = await request.response()
+
+  const responseCode = response.status()
+  let responseHash = null
+  if (response.ok()) {
+    const buffer = await response.buffer()
+    responseHash = braveHashLib.sha256(buffer)
+  }
 
   const frameId = frame._id
   const frameUrl = frame.url()
@@ -148,68 +185,88 @@ const onRequestCallback = async (requestStore, interceptedRequest) => {
 
   requestStore.push(
     [dateString, parentFrameId, frameId, frameUrl, requestType, requestUrl,
-      responseHash])
+      responseHash, responseCode])
 }
 
 const start = async args => {
-  puppeteerLib.use(puppeteerStealthLib())
-  const browser = await puppeteerLib.launch({
+  const puppeteerLaunchArgs = {
     executablePath: braveResourcesLib.chromiumPath(),
-    userDataDir: braveResourcesLib.userDataDirPath()
-  })
+    userDataDir: braveResourcesLib.userDataDirPath(),
+    args: [
+      '--disable-gpu',
+      '--no-sandbox',
+      '--single-process'
+    ]
+  }
+
+  braveDebugLib.verbose(`Launching chrome headless with: ${JSON.stringify(puppeteerLaunchArgs)}`)
+  const browser = await puppeteerLib.launch(puppeteerLaunchArgs)
 
   const page = await browser.newPage()
   const report = []
 
   // We want to let the page run for 30 sec, whether or not the page
   // finishes loading in that time.
-  const waitTime = 30000
+  const waitTime = args.secs
   const startTime = Date.now()
-  const callbackHandler = onRequestCallback.bind(undefined, report)
-  page.on('request', callbackHandler)
+  const callbackHandler = onRequestCompleteCallback.bind(undefined, report)
+  page.on('requestfinished', callbackHandler)
   try {
+    braveDebugLib.verbose(`Requesting url: ${args.url}`)
     await page.goto(args.url)
   } catch (e) {
     if ((e instanceof puppeteerLib.errors.TimeoutError) === false) {
-      throw e
+      braveDebugLib.log(`Error doing top level fetch: ${e.toString()}`)
+      return
     }
+    braveDebugLib.verbose('Received timeout error')
   }
   const endTime = Date.now()
   const timeElapsed = endTime - startTime
 
-  if (timeElapsed > waitTime) {
-    await page.waitFor(waitTime - timeElapsed)
+  if (timeElapsed < waitTime) {
+    const additionalWaitTime = waitTime - timeElapsed
+    braveDebugLib.verbose(`Waiting an extra: ${additionalWaitTime}ms`)
+    await page.waitFor(additionalWaitTime)
   }
 
-  page.removeListener('request', callbackHandler)
+  page.removeListener('requestfinished', callbackHandler)
+  braveDebugLib.log(`Captured ${report.length} requests.`)
 
   // Check to see if we should go "deeper"
   if (args.currentDepth < args.depth) {
-    const childUrls = selectETldPlusOneLinks(page, args.breath)
-    for (let i = 1; i <= args.breath; i += 1) {
+    const childUrls = await selectETldPlusOneLinks(page, args.breath)
+    for (let i = 0; i < args.breath; i += 1) {
       const aChildUrl = childUrls[i]
+      braveDebugLib.verbose(`Queuing up child page: ${aChildUrl}.`)
       const jobDesc = Object.create(null)
+      jobDesc.path = args.path.concat([i])
       jobDesc.batch = args.batch
       jobDesc.url = aChildUrl
       jobDesc.domain = args.domain
       jobDesc.depth = args.depth
-      jobDesc.currentDepth = args.depth + 1
+      jobDesc.currentDepth = args.currentDepth + 1
       jobDesc.breath = args.breath
       jobDesc.currentBreath = i
       jobDesc.bucket = args.bucket
       jobDesc.sqsQueue = args.sqsQueue
-      await braveSQSLib.write(jobDesc)
+      jobDesc.action = 'crawl'
+      const jobString = JSON.stringify(jobDesc)
+      await braveSQSLib.write(jobDesc.sqsQueue, jobString)
     }
+  } else {
+    braveDebugLib.verbose('Not recusing further in crawl.')
   }
 
   // Finally, write our results in S3.
-  const s3Key = `${args.batch}/data/${args.domain}/${args.depth}-${args.breath}.json`
+  const pathKey = args.path.map(x => x.toString()).join('-')
+  const s3Key = `${args.batch}/data/${args.domain}/${pathKey}.json`
   const crawlData = Object.create(null)
   crawlData.url = args.url
   crawlData.data = report
-  crawlData.breath = args.breath
-  crawlData.depth = args.depth
-  crawlData.timestamp = (new Date()).toISOString
+  crawlData.breath = args.currentBreath
+  crawlData.depth = args.currentDepth
+  crawlData.timestamp = (new Date()).toISOString()
   await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData))
 }
 

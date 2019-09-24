@@ -39,7 +39,7 @@ const braveValidationLib = require('../validation')
  *  - sqsQueue {string}
  *      The SQS queue to write any additional information into.  This will
  *      be used to push any domains / URLs that should be crawled into.
- *      Defaults to `comBraveResearchSlim-list`.
+ *      Defaults to `https://sqs.us-east-1.amazonaws.com/275005321946/brave-slim-list`
  *  - lists {array.string}
  *      A list of filter lists to measure on this batch.  By default uses
  *      ["https://easylist.to/easylist/easylist.txt",
@@ -86,7 +86,7 @@ const validateArgs = async inputArgs => {
     },
     sqsQueue: {
       validate: isString,
-      default: 'comBraveResearchSlim-list'
+      default: 'https://sqs.us-east-1.amazonaws.com/275005321946/brave-slim-list'
     },
     lists: {
       validate: isAllString,
@@ -158,8 +158,7 @@ const start = async args => {
   manifest.batch = args.batch
 
   if (domainsToCrawl === undefined) {
-    domainsToCrawl = await braveS3Lib
-      .read(args.listS3Bucket, args.listS3Key)
+    domainsToCrawl = (await braveS3Lib.read(args.listS3Bucket, args.listS3Key))
       .toString('utf8')
       .split('\n')
     manifest.domainsSource = `s3://${args.listS3Bucket}/${args.listS3Key}`
@@ -212,16 +211,18 @@ const start = async args => {
 
   for (const aDomain of domainsToCrawl) {
     const jobDesc = Object.create(null)
+    jobDesc.action = 'crawl'
     jobDesc.batch = args.batch
     jobDesc.url = `http://${aDomain}`
     jobDesc.domain = aDomain
     jobDesc.depth = args.depth
-    jobDesc.currentDepth = 1
+    jobDesc.currentDepth = 0
     jobDesc.breath = args.breath
-    jobDesc.currentBreath = 1
+    jobDesc.currentBreath = 0
     jobDesc.bucket = args.destS3Bucket
     jobDesc.sqsQueue = args.sqsQueue
-    await braveSQSLib.write(args.sqsQueue, JSON.stringify(jobDesc))
+    const jobString = JSON.stringify(jobDesc)
+    await braveSQSLib.write(args.sqsQueue, jobString)
   }
 }
 

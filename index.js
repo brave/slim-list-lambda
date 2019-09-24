@@ -4,9 +4,14 @@ const braveDebugLib = require('./brave/debug')
 const braveLambdaLib = require('./brave/lambda')
 
 const dispatch = async lambdaEvent => {
+  braveDebugLib.verbose(`Received message ${JSON.stringify(lambdaEvent)}`)
   await braveLambdaLib.cleanEnv()
 
   try {
+    if (typeof lambdaEvent === 'string') {
+      lambdaEvent = JSON.parse(lambdaEvent)
+    }
+
     if (lambdaEvent.Records) {
       // Check to see if we're receiving data from SQS
       for (const args of lambdaEvent.Records) {

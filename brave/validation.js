@@ -39,11 +39,13 @@ const ofTypeAndTruthy = (typeAsString, value) => {
   if ((!!value) === false) {
     return [false, `Expected value to be truthy, but found ${value}.`]
   }
+
+  return [true, undefined]
 }
 
 const isPositiveNumber = value => {
   const valueType = typeof value
-  if (value !== 'number') {
+  if (valueType !== 'number') {
     return [false, `Expected argument to be a number, but found ${valueType}.`]
   }
 
@@ -70,12 +72,12 @@ const isStringOfLength = (length, value) => {
 const isLessThanOrEqual = (otherValue, value) => {
   const otherValueType = typeof otherValue
   if (otherValueType !== 'number') {
-    return [false, `Expected compared value to of type number, but found ${otherValueType}.`]
+    return [false, `Expected compared value to be type number, but found ${otherValueType}.`]
   }
 
   const thisValueType = typeof value
   if (thisValueType !== 'number') {
-    return [false, `Expected measured value to of type number, but found ${thisValueType}.`]
+    return [false, `Expected measured value to be type number, but found ${thisValueType}.`]
   }
 
   if (value > otherValue) {
@@ -104,10 +106,12 @@ const applyValidationRules = (initValues, rules) => {
     }
 
     const validationFunc = value.validate
-    const [isValid, msg] = validationFunc(initialValue)
+    if (validationFunc) {
+      const [isValid, msg] = validationFunc(initialValue)
 
-    if (isValid === false) {
-      return [false, `${key}: ${msg}`]
+      if (isValid === false) {
+        return [false, `${key}: ${msg}`]
+      }
     }
     validArgs[key] = initialValue
   }
