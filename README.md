@@ -5,7 +5,6 @@ S3 Data
       domains.json
       rules.dat
       manifest.json
-      ?progress.json
       data
         <domain>
           <depth-breath>.json

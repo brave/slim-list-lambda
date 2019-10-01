@@ -24,7 +24,7 @@ const dispatch = async lambdaEvent => {
     let lambdaModule
 
     switch (lambdaEvent.action) {
-      case 'start':
+      case 'crawl-dispatch':
       case 'crawl':
       case 'record':
       case 'build':

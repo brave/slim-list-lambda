@@ -109,6 +109,10 @@ const getClient = async _ => {
   return client
 }
 
+const closeClient = async client => {
+  await client.end()
+}
+
 const _idForBatch = _makeGetIdFunc('batches', 'batch', false)
 const _idForDomain = _makeGetIdFunc('domains', 'domain', true)
 const _idForRule = _makeGetIdFunc('rules', 'rule', true)
@@ -379,6 +383,7 @@ const popularBlockingRules = async (client, earliestTimestamp, maxRules) => {
 
 module.exports = {
   getClient,
+  closeClient,
   popularExceptionRules,
   popularBlockingRules,
   recordBatchWithTags,

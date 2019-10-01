@@ -1,9 +1,10 @@
 SHELL := /bin/bash
 
-TMP_WORKSPACE := build/
-TMP_RESROUCES := $(TMP_WORKSPACE)/resources
+TMP_WORKSPACE := build
+TMP_RESOURCES := $(TMP_WORKSPACE)/resources
 
-CHROME_DRIVER_URL := https://chromedriver.storage.googleapis.com/76.0.3809.126/chromedriver_linux64.zip
+CHROME_HEADLESS_ZIP_PATH := $(TMP_WORKSPACE)/resources/chromium_headless.zip
+CHROME_HEADLESS_PATH := $(TMP_WORKSPACE)/resources/headless-chromium
 CHROME_HEADLESS_URL := https://github.com/adieuadieu/serverless-chrome/releases/download/v1.0.0-55/stable-headless-chromium-amazonlinux-2017-03.zip
 
 FUNCTION_NAME=slim-list-generator
@@ -45,19 +46,14 @@ bundle:
 	find $(TMP_WORKSPACE)/node_modules/adblock-rs/native/target/release/ -type f -not -name libadblock_rs.so -delete
 	find $(TMP_WORKSPACE)/node_modules -type f -name "*.md" -delete
 	find $(TMP_WORKSPACE)/node_modules -type d -name "test" | xargs rm -rf
-	curl -L $(CHROME_DRIVER_URL) --output $(TMP_WORKSPACE)/resources/chromedriver.zip
-	unzip $(TMP_WORKSPACE)/resources/chromedriver.zip -d $(TMP_WORKSPACE)/resources/
-	rm $(TMP_WORKSPACE)/resources/chromedriver.zip
-	curl -L $(CHROME_HEADLESS_URL) --output $(TMP_WORKSPACE)/resources/chromium_headless.zip
-	unzip $(TMP_WORKSPACE)/resources/chromium_headless.zip -d $(TMP_WORKSPACE)/resources/
-	rm $(TMP_WORKSPACE)/resources/chromium_headless.zip
+	if [ -a -$(CHROME_HEADLESS_PATH) ]; then curl -L $(CHROME_HEADLESS_URL) --output $(CHROME_HEADLESS_ZIP_PATH) && unzip $(CHROME_HEADLESS_ZIP_PATH) -d $(TMP_RESOURCES) && rm $(CHROME_HEADLESS_ZIP_PATH); fi;
 	cd $(TMP_WORKSPACE)/ && zip -r $(FUNCTION_NAME).zip *
 
-test-start:
+test-crawl-dispatch:
 	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		-e AWS_REGION=$(AWS_REGION) -e PG_HOSTNAME="$(PG_HOSTNAME)" -e PG_PORT=5432 -e PG_USERNAME="$(PG_USERNAME)" \
 		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 -it -v $(PWD)/$(TMP_WORKSPACE):/var/task lambci/lambda:nodejs8.10 index.dispatch \
-		'{"action": "start", "domains": ["example.com"] }'
+		'{"action": "crawl-dispatch", "domains": ["example.com"] }'
 
 test-crawl:
 	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) -e DEBUG=1 -e VERBOSE=1 -it -v \
@@ -73,5 +69,6 @@ test-record:
 deploy:
 	aws s3 cp $(TMP_WORKSPACE)/$(FUNCTION_NAME).zip s3://$(FUNCTION_S3_BUCKET)/$(FUNCTION_NAME).zip
 	aws lambda update-function-code --function-name $(FUNCTION_NAME) --s3-bucket $(FUNCTION_S3_BUCKET) --s3-key $(FUNCTION_NAME).zip
+	aws lambda update-function-code --function-name $(FUNCTION_NAME)-record --s3-bucket $(FUNCTION_S3_BUCKET) --s3-key $(FUNCTION_NAME).zip
 
 build: clean install-lambda bundle

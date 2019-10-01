@@ -104,6 +104,9 @@ const validateArgs = async inputArgs => {
     sqsQueue: {
       validate: stringCheck
     },
+    sqsRecordQueue: {
+      validate: stringCheck
+    },
     secs: {
       validate: braveValidationLib.isPositiveNumber,
       default: 30000
@@ -250,12 +253,13 @@ const start = async args => {
       jobDesc.currentBreath = i
       jobDesc.bucket = args.bucket
       jobDesc.sqsQueue = args.sqsQueue
+      jobDesc.sqsRecordQueue = args.sqsRecordQueue
       jobDesc.action = 'crawl'
       const jobString = JSON.stringify(jobDesc)
       await braveSQSLib.write(jobDesc.sqsQueue, jobString)
     }
   } else {
-    braveDebugLib.verbose('Not recusing further in crawl.')
+    braveDebugLib.verbose('Not going deeper in crawl.')
   }
 
   // Finally, write our results in S3.
@@ -268,6 +272,13 @@ const start = async args => {
   crawlData.depth = args.currentDepth
   crawlData.timestamp = (new Date()).toISOString()
   await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData))
+
+  const sqsMessage = Object.create(null)
+  sqsMessage.batch = args.batch
+  sqsMessage.domain = args.domain
+  sqsMessage.position = pathKey
+  sqsMessage.action = 'record'
+  await braveSQSLib.write(args.sqsRecordQueue, JSON.stringify(sqsMessage))
 }
 
 module.exports = {

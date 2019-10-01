@@ -40,6 +40,10 @@ const braveValidationLib = require('../validation')
  *      The SQS queue to write any additional information into.  This will
  *      be used to push any domains / URLs that should be crawled into.
  *      Defaults to `https://sqs.us-east-1.amazonaws.com/275005321946/brave-slim-list`
+ *  - sqsRecordQueue {string}
+ *      The SQS queue used for keeping track of which reports are ready
+ *      to be recorded in to the database.
+ *      Defaults to `https://sqs.us-east-1.amazonaws.com/275005321946/brave-slim-list-record`
  *  - lists {array.string}
  *      A list of filter lists to measure on this batch.  By default uses
  *      ["https://easylist.to/easylist/easylist.txt",
@@ -87,6 +91,10 @@ const validateArgs = async inputArgs => {
     sqsQueue: {
       validate: isString,
       default: 'https://sqs.us-east-1.amazonaws.com/275005321946/brave-slim-list'
+    },
+    sqsRecordQueue: {
+      validate: isString,
+      default: 'https://sqs.us-east-1.amazonaws.com/275005321946/brave-slim-list-record'
     },
     lists: {
       validate: isAllString,
@@ -193,20 +201,21 @@ const start = async args => {
       return combined.concat(current.split('\n'))
     }, [])
 
-  await braveS3Lib.write(args.destS3Bucket, `${args.batch}/manifest.json`,
+  const s3KeyPrefix = `${args.batch}/`
+  await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}manifest.json`,
     JSON.stringify(manifest))
 
   for (const filterListHash of Object.keys(filterListHashTextMap)) {
     await braveS3Lib.write(args.destS3Bucket,
-      `${args.batch}/${filterListHash}`,
+      `${s3KeyPrefix}${filterListHash}`,
       filterListHashTextMap[filterListHash])
   }
 
-  await braveS3Lib.write(args.destS3Bucket, `${args.batch}/domains.json`,
+  await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}domains.json`,
     JSON.stringify(domainsToCrawl))
 
   const adBlockDat = braveAdBlockLib.serializeRules(combinedRules)
-  await braveS3Lib.write(args.destS3Bucket, `${args.batch}/rules.dat`,
+  await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}rules.dat`,
     adBlockDat)
 
   for (const aDomain of domainsToCrawl) {
@@ -221,6 +230,7 @@ const start = async args => {
     jobDesc.currentBreath = 0
     jobDesc.bucket = args.destS3Bucket
     jobDesc.sqsQueue = args.sqsQueue
+    jobDesc.sqsRecordQueue = args.sqsRecordQueue
     const jobString = JSON.stringify(jobDesc)
     await braveSQSLib.write(args.sqsQueue, jobString)
   }
