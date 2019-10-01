@@ -29,6 +29,22 @@ const allOfTypeAndTruthy = (typeAsString, list) => {
   return [true, undefined]
 }
 
+const allOfType = (typeAsString, list) => {
+  if (Array.isArray(list) === false) {
+    return [false, `Given argument isn't an array, its a ${typeof list}.`]
+  }
+
+  for (const value of list) {
+    const itemType = typeof value
+    if (itemType !== typeAsString) {
+      return [false,
+                `Expected all items to be ${typeAsString}, but found ${itemType}.`]
+    }
+  }
+
+  return [true, undefined]
+}
+
 const ofTypeAndTruthy = (typeAsString, value) => {
   const itemType = typeof value
   if (itemType !== typeAsString) {
@@ -120,6 +136,7 @@ const applyValidationRules = (initValues, rules) => {
 }
 
 module.exports = {
+  allOfType,
   allOfTypeAndTruthy,
   ofTypeAndTruthy,
   isPositiveNumber,

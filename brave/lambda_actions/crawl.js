@@ -112,6 +112,7 @@ const validateArgs = async inputArgs => {
       default: 30000
     },
     path: {
+      validate: braveValidationLib.allOfType.bind(undefined, 'number'),
       default: [0]
     }
   }
@@ -163,32 +164,36 @@ const selectETldPlusOneLinks = async (page, count = 3) => {
 }
 
 const onRequestCompleteCallback = async (requestStore, request) => {
-  const frame = request.frame()
-  if (frame === null) {
-    return
+  try {
+    const frame = request.frame()
+    if (frame === null) {
+      return
+    }
+
+    const requestUrl = request.url()
+    braveDebugLib.verbose(`Saw request to: ${requestUrl}`)
+
+    const requestType = request.resourceType()
+    const response = await request.response()
+
+    const responseCode = response.status()
+    let responseHash = null
+    if (response.ok()) {
+      const buffer = await response.buffer()
+      responseHash = braveHashLib.sha256(buffer)
+    }
+
+    const frameId = frame._id
+    const frameUrl = frame.url()
+    const parentFrameId = frame.parentFrame() ? frame.parentFrame()._id : null
+    const dateString = (new Date()).toISOString()
+
+    requestStore.push(
+      [dateString, parentFrameId, frameId, frameUrl, requestType, requestUrl,
+        responseHash, responseCode])
+  } catch (e) {
+    braveDebugLib.verbose(`Error when receiving puppeteer response: ${e.toString()}`)
   }
-
-  const requestUrl = request.url()
-  braveDebugLib.verbose(`Saw request to: ${requestUrl}`)
-
-  const requestType = request.resourceType()
-  const response = await request.response()
-
-  const responseCode = response.status()
-  let responseHash = null
-  if (response.ok()) {
-    const buffer = await response.buffer()
-    responseHash = braveHashLib.sha256(buffer)
-  }
-
-  const frameId = frame._id
-  const frameUrl = frame.url()
-  const parentFrameId = frame.parentFrame() ? frame.parentFrame()._id : null
-  const dateString = (new Date()).toISOString()
-
-  requestStore.push(
-    [dateString, parentFrameId, frameId, frameUrl, requestType, requestUrl,
-      responseHash, responseCode])
 }
 
 const start = async args => {

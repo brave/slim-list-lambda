@@ -26,7 +26,7 @@ const braveValidationLib = require('../validation')
  *      The S3 bucket to record slim list into. Defaults to
  *      `com.brave.research.slim-list`
  *  - s3Key {string}
- *      The S3 key to write slim list to.  Defaults to `slim-list/<date>.txt`
+ *      The S3 key to write slim list to.  Defaults to `slim-list/<date>.json`
  *
  * @return [bool, object|string]
  *   Returns either false, and then a string describing the error in the
@@ -50,7 +50,7 @@ const validateArgs = async inputArgs => {
     },
     s3Key: {
       validate: isString,
-      default: `slim-list/${(new Date()).toISOString()}.txt`
+      default: `slim-list/${(new Date()).toISOString()}.json`
     }
   }
 
@@ -86,7 +86,7 @@ const start = async args => {
   const combinedRules = exceptionRules.concat(blockingRules)
 
   braveDebugLib.log(`Saving slim-list with ${combinedRules.length} rules`)
-  const rulesJSON = JSON.stringify(combinedRules.join('\n'))
+  const rulesJSON = JSON.stringify(combinedRules)
   await braveS3Lib.write(args.s3Bucket, args.s3Key, rulesJSON)
   await braveS3Lib.write(args.s3Bucket, 'slim-list/latest.json', rulesJSON)
 }

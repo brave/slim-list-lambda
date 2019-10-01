@@ -46,32 +46,56 @@ const _insertWithId = async (client, table, colToValueMap) => {
 
 const _makeGetIdFunc = (table, textColumn, useHash, client, value) => {
   const idCache = Object.create(null)
-  let queryColumn, insertQuery
+  let upcertQuery
 
   if (useHash === true) {
-    queryColumn = 'sha256'
-    insertQuery = `INSERT INTO ${table}(${textColumn}, sha256) VALUES ($1, $2) RETURNING id;`
+    upcertQuery = `
+      WITH input_rows(${textColumn}, sha256) AS (
+        VALUES ($1::text, $2::character(64))
+      )
+      , ins AS (
+        INSERT INTO ${table} (${textColumn}, sha256)
+        SELECT * FROM input_rows
+        ON CONFLICT (sha256) DO NOTHING
+        RETURNING id
+      )
+      SELECT 'i' AS source, id
+      FROM   ins
+      UNION  ALL
+      SELECT 's' AS source, t.id
+      FROM   input_rows
+      JOIN   ${table} t USING (sha256);`
   } else {
-    queryColumn = textColumn
-    insertQuery = `INSERT INTO ${table}(${textColumn}) VALUES ($1) RETURNING id;`
+    upcertQuery = `
+      WITH input_rows(${textColumn}) AS (
+        VALUES ($1::text)
+      )
+      , ins AS (
+        INSERT INTO ${table} (${textColumn})
+        SELECT * FROM input_rows
+        ON CONFLICT (${textColumn}) DO NOTHING
+        RETURNING id
+      )
+      SELECT 'i' AS source, id
+      FROM   ins
+      UNION  ALL
+      SELECT 's' AS source, t.id
+      FROM   input_rows
+      JOIN   ${table} t USING (${textColumn});`
   }
-
-  const selectQuery = `SELECT id FROM ${table} WHERE ${queryColumn} = $1 LIMIT 1;`
 
   return async (client, value) => {
     braveDebugLib.verbose(`Searching for ${value} in ${table}`)
 
-    let queryValue, insertParams
+    let queryValue, upcertParams
 
     if (useHash === true) {
       queryValue = braveHashLib.sha256(value)
-      insertParams = [value, queryValue]
+      upcertParams = [value, queryValue]
     } else {
       queryValue = value
-      insertParams = [value]
+      upcertParams = [value]
     }
-
-    const selectParams = [queryValue]
 
     if (idCache[queryValue] !== undefined) {
       const cachedValue = idCache[queryValue]
@@ -79,18 +103,9 @@ const _makeGetIdFunc = (table, textColumn, useHash, client, value) => {
       return cachedValue
     }
 
-    let rowId
-    const selectRs = await client.query(selectQuery, selectParams)
-    if (selectRs.rows && selectRs.rows.length === 1) {
-      rowId = selectRs.rows[0].id
-      braveDebugLib.verbose(`Found ${value} has ${table}.id = ${rowId}`)
-      idCache[queryValue] = rowId
-      return rowId
-    }
-
-    const insertRs = await client.query(insertQuery, insertParams)
-    rowId = insertRs.rows[0].id
-    braveDebugLib.verbose(`Inserted ${value} into ${table} with id = ${rowId}`)
+    const upcertRs = await client.query(upcertQuery, upcertParams)
+    const rowId = upcertRs.rows[0].id
+    braveDebugLib.verbose(`${value} has ${table}.id = ${rowId}`)
     idCache[queryValue] = rowId
     return rowId
   }
@@ -113,7 +128,33 @@ const closeClient = async client => {
   await client.end()
 }
 
-const _idForBatch = _makeGetIdFunc('batches', 'batch', false)
+const _idForBatchCache = Object.create(null)
+const _idForBatch = async (client, batchUuid) => {
+  if (_idForBatchCache[batchUuid] !== undefined) {
+    return _idForBatchCache[batchUuid]
+  }
+
+  const selectQuery = `
+    SELECT
+      b.id
+    FROM
+      batches AS b
+    WHERE
+      b.batch = $1
+    LIMIT
+      1
+  `
+
+  // The lambda logic ensures that there will always be
+  // a batch with the given uuid when this function is called.
+  const selectRs = await client.query(selectQuery, [batchUuid])
+  const batchId = selectRs.rows[0].id
+
+  _idForBatchCache[batchUuid] = batchId
+  return batchId
+}
+
+_makeGetIdFunc('batches', 'batch', false)
 const _idForDomain = _makeGetIdFunc('domains', 'domain', true)
 const _idForRule = _makeGetIdFunc('rules', 'rule', true)
 const _idForUrl = _makeGetIdFunc('urls', 'url', true)
@@ -312,7 +353,7 @@ const recordPage = async (client, batch, domain, pageUrl, depth, breath, pageTim
 const popularExceptionRules = async (client, earliestTimestamp, maxRules) => {
   const selectQuery = `
     SELECT
-      r.id
+      r.excepting_rule_id
     FROM
       batches AS b
     JOIN
@@ -325,14 +366,17 @@ const popularExceptionRules = async (client, earliestTimestamp, maxRules) => {
       b.created_on >= $1 AND
       r.excepting_rule_id IS NOT NULL
     GROUP BY
-      r.id
+      r.excepting_rule_id
     ORDER BY
       COUNT(*) DESC
     LIMIT
       ${maxRules};`
 
   const selectRs = await client.query(selectQuery, [earliestTimestamp])
-  const ruleIds = selectRs.rows.map(row => row.id)
+  if (selectRs.rows.length === 0) {
+    return []
+  }
+  const ruleIds = selectRs.rows.map(row => row.excepting_rule_id)
 
   const ruleSelectQuery = `
     SELECT
@@ -340,7 +384,7 @@ const popularExceptionRules = async (client, earliestTimestamp, maxRules) => {
     FROM
       rules AS r
     WHERE
-      r.id IN (${ruleIds.split(',')})`
+      r.id IN (${ruleIds.join(',')})`
   const ruleSelectRs = await client.query(ruleSelectQuery, [])
   return ruleSelectRs.rows.map(row => row.rule)
 }
@@ -348,7 +392,7 @@ const popularExceptionRules = async (client, earliestTimestamp, maxRules) => {
 const popularBlockingRules = async (client, earliestTimestamp, maxRules) => {
   const selectQuery = `
     SELECT
-      r.id
+      r.rule_id
     FROM
       batches AS b
     JOIN
@@ -361,14 +405,17 @@ const popularBlockingRules = async (client, earliestTimestamp, maxRules) => {
       b.created_on >= $1 AND
       r.rule_id IS NOT NULL
     GROUP BY
-      r.id
+      r.rule_id
     ORDER BY
       COUNT(*) DESC
     LIMIT
       ${maxRules};`
 
   const selectRs = await client.query(selectQuery, [earliestTimestamp])
-  const ruleIds = selectRs.rows.map(row => row.id)
+  if (selectRs.rows.length === 0) {
+    return []
+  }
+  const ruleIds = selectRs.rows.map(row => row.rule_id)
 
   const ruleSelectQuery = `
     SELECT
@@ -376,7 +423,7 @@ const popularBlockingRules = async (client, earliestTimestamp, maxRules) => {
     FROM
       rules AS r
     WHERE
-      r.id IN (${ruleIds.split(',')})`
+      r.id IN (${ruleIds.join(',')})`
   const ruleSelectRs = await client.query(ruleSelectQuery, [])
   return ruleSelectRs.rows.map(row => row.rule)
 }
