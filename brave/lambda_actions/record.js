@@ -8,6 +8,7 @@
 
 const braveAdBlockLib = require('../adblock')
 const braveDbLib = require('../db')
+const braveDebugLib = require('../debug')
 const braveS3Lib = require('../s3')
 const braveValidationLib = require('../validation')
 
@@ -71,9 +72,16 @@ const start = async args => {
   const blockingResult = braveAdBlockLib.applyBlockingRules(adBlockClient, data)
 
   const dbClient = await braveDbLib.getClient()
-  await braveDbLib.recordPage(dbClient, args.batch, args.domain, url,
-    depth, breath, timestamp, blockingResult.allowed, blockingResult.blocked)
-  await braveDbLib.closeClient(dbClient)
+  try {
+    await braveDbLib.recordPage(dbClient, args.batch, args.domain, url,
+      depth, breath, timestamp, blockingResult.allowed, blockingResult.blocked)
+  } catch (e) {
+    braveDebugLib.log(`Error when recording to database: ${e.toString()}.`)
+  }
+
+  try {
+    await braveDbLib.closeClient(dbClient)
+  } catch (_) {}
 }
 
 module.exports = {

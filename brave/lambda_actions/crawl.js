@@ -206,23 +206,7 @@ const onRequestCompleteCallback = async (requestStore, request) => {
   }
 }
 
-const start = async args => {
-  const puppeteerLaunchArgs = {
-    executablePath: braveResourcesLib.chromiumPath(),
-    userDataDir: braveResourcesLib.userDataDirPath(),
-    args: [
-      '--disable-gpu',
-      '--no-sandbox',
-      '--single-process',
-      '--disable-setuid-sandbox',
-      '--no-zygote'
-    ]
-  }
-
-  braveDebugLib.verbose(`Launching chrome headless with: ${JSON.stringify(puppeteerLaunchArgs)}`)
-  const browser = await puppeteerLib.launch(puppeteerLaunchArgs)
-
-  const page = await browser.newPage()
+const _crawlPage = async (page, args) => {
   const report = []
 
   // We want to let the page run for 30 sec, whether or not the page
@@ -299,9 +283,39 @@ const start = async args => {
   sqsMessage.position = pathKey
   sqsMessage.action = 'record'
   await braveSQSLib.write(args.sqsRecordQueue, JSON.stringify(sqsMessage))
+}
+
+const start = async args => {
+  const puppeteerLaunchArgs = {
+    executablePath: braveResourcesLib.chromiumPath(),
+    userDataDir: braveResourcesLib.userDataDirPath(),
+    args: [
+      '--disable-gpu',
+      '--no-sandbox',
+      '--single-process',
+      '--disable-setuid-sandbox',
+      '--no-zygote'
+    ]
+  }
+
+  braveDebugLib.verbose(`Launching chrome headless with: ${JSON.stringify(puppeteerLaunchArgs)}`)
+  const browser = await puppeteerLib.launch(puppeteerLaunchArgs)
+  const page = await browser.newPage()
+
+  try {
+    await _crawlPage(page, args)
+  } catch (e) {
+    braveDebugLib.log(`Error when crawling ${args.url}: ${e.toString()}`)
+  }
 
   braveDebugLib.verbose('Wrapping up and closing puppeteer.')
-  await browser.close()
+  try {
+    await page.close()
+  } catch (_) {}
+
+  try {
+    await browser.close()
+  } catch (_) {}
 }
 
 module.exports = {

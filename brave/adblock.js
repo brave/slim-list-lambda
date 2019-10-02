@@ -10,14 +10,14 @@ const adblockRsLib = require('adblock-rs')
 const braveDebugLib = require('./debug')
 
 const serializeRules = rules => {
-  braveDebugLib.log(`Serializing ${rules.length} rules`)
+  braveDebugLib.verbose(`Serializing ${rules.length} rules`)
   const adBlockArgs = {
     debug: true,
     optimize: false
   }
   const adBlockDat = (new adblockRsLib.Engine(rules, adBlockArgs)).serialize()
   const adBlockDatBuffer = Buffer.from(adBlockDat)
-  braveDebugLib.log(`Successfully serialized rules into buffer of length ${adBlockDatBuffer.byteLength}`)
+  braveDebugLib.verbose(`Successfully serialized rules into buffer of length ${adBlockDatBuffer.byteLength}`)
   return adBlockDatBuffer
 }
 
@@ -28,7 +28,7 @@ const createClient = adblockDatBuffer => {
 }
 
 const applyBlockingRules = (adblockClient, requests) => {
-  braveDebugLib.log(`Applying filter rules to ${requests.length} requests`)
+  braveDebugLib.verbose(`Applying filter rules to ${requests.length} requests`)
   const allowed = []
   const blocked = []
 
@@ -54,7 +54,7 @@ const applyBlockingRules = (adblockClient, requests) => {
     blocked.push(aReport.concat([matchResult.filter, matchResult.exception]))
   }
 
-  braveDebugLib.log(`Would block ${blocked.length} requests, allow ${allowed.length} requests`)
+  braveDebugLib.verbose(`Would block ${blocked.length} requests, allow ${allowed.length} requests`)
 
   const result = Object.create(null)
   result.allowed = allowed
