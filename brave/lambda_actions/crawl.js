@@ -206,7 +206,9 @@ const start = async args => {
     args: [
       '--disable-gpu',
       '--no-sandbox',
-      '--single-process'
+      '--single-process',
+      '--disable-setuid-sandbox',
+      '--no-zygote'
     ]
   }
 
@@ -290,6 +292,9 @@ const start = async args => {
   sqsMessage.position = pathKey
   sqsMessage.action = 'record'
   await braveSQSLib.write(args.sqsRecordQueue, JSON.stringify(sqsMessage))
+
+  braveDebugLib.verbose('Wrapping up and closing puppeteer.')
+  await browser.close()
 }
 
 module.exports = {

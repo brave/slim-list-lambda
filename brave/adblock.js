@@ -11,7 +11,11 @@ const braveDebugLib = require('./debug')
 
 const serializeRules = rules => {
   braveDebugLib.log(`Serializing ${rules.length} rules`)
-  const adBlockDat = (new adblockRsLib.Engine(rules, true)).serialize()
+  const adBlockArgs = {
+    debug: true,
+    optimize: false
+  }
+  const adBlockDat = (new adblockRsLib.Engine(rules, adBlockArgs)).serialize()
   const adBlockDatBuffer = Buffer.from(adBlockDat)
   braveDebugLib.log(`Successfully serialized rules into buffer of length ${adBlockDatBuffer.byteLength}`)
   return adBlockDatBuffer
