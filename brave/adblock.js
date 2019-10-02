@@ -35,16 +35,18 @@ const applyBlockingRules = (adblockClient, requests) => {
 
     const matchResult = adblockClient.check(requestUrl, frameUrl, requestType, true)
     if (matchResult.matched === false) {
+      if (matchResult.exception) {
+        braveDebugLib.verbose(`Would block ${requestUrl} in frame ${frameUrl} of type ${requestType} with rule ${matchResult.filter} but excepted by ${matchResult.exception}`)
+        blocked.push(aReport.concat([matchResult.filter, matchResult.exception]))
+        continue
+      }
+
       braveDebugLib.verbose(`Would not block ${requestUrl} in frame ${frameUrl} of type ${requestType}`)
       allowed.push(aReport)
       continue
     }
 
     braveDebugLib.verbose(`Would block ${requestUrl} in frame ${frameUrl} of type ${requestType} with rule ${matchResult.filter}`)
-    if (matchResult.exception !== null) {
-      braveDebugLib.verbose(`…but excepted by ${matchResult.exception}`)
-    }
-
     blocked.push(aReport.concat([matchResult.filter, matchResult.exception]))
   }
 

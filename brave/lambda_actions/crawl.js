@@ -137,7 +137,7 @@ const selectETldPlusOneLinks = async (page, count = 3) => {
     const hrefHandle = await aLink.getProperty('href')
     const hrefValue = await hrefHandle.jsonValue()
     try {
-      const hrefUrl = new urlLib.URL(hrefValue, pageUrl)
+      const hrefUrl = new urlLib.URL(hrefValue.trim(), pageUrl)
       hrefUrl.hash = ''
       hrefUrl.search = ''
       const childUrlString = hrefUrl.toString()
@@ -146,6 +146,9 @@ const selectETldPlusOneLinks = async (page, count = 3) => {
       }
       const childLinkETld = tldjsLib.getDomain(childUrlString)
       if (childLinkETld !== mainETld) {
+        continue
+      }
+      if (!childUrlString || childUrlString.trim().length === 0) {
         continue
       }
       sameETldLinks.add(childUrlString)
@@ -246,7 +249,10 @@ const start = async args => {
     const childUrls = await selectETldPlusOneLinks(page, args.breath)
     for (let i = 0; i < args.breath; i += 1) {
       const aChildUrl = childUrls[i]
-      braveDebugLib.verbose(`Queuing up child page: ${aChildUrl}.`)
+      if (!aChildUrl || aChildUrl.trim().length === 0) {
+        continue
+      }
+      braveDebugLib.log(`Queuing up child page: ${aChildUrl}.`)
       const jobDesc = Object.create(null)
       jobDesc.path = args.path.concat([i])
       jobDesc.batch = args.batch
