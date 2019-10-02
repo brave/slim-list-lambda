@@ -21,11 +21,11 @@ const possibleTempDirs = [
 ]
 
 const cleanEnv = async _ => {
-  debugLib.log('Cleaning up...')
+  debugLib.verbose('Cleaning up...')
   const cleanedDirs = []
   for (const tempPath of possibleTempDirs) {
     if (await existsPromise(tempPath)) {
-      debugLib.log('Removing: ' + tempPath)
+      debugLib.verbose('Removing: ' + tempPath)
       await emptyDirPromise(tempPath)
       await rmdirPromise(tempPath)
       cleanedDirs.push(tempPath)
@@ -45,7 +45,7 @@ const invoke = async (lambdaName, args) => {
     Payload: args
   }
 
-  debugLib.log(`Calling ${lambdaName} with args ${JSON.stringify(lambdaParams)} as Event.`)
+  debugLib.verbose(`Calling ${lambdaName} with args ${JSON.stringify(lambdaParams)} as Event.`)
 
   lambdaParams.ClientContext = JSON.stringify(lambdaParams.ClientContext)
   lambdaParams.Payload = JSON.stringify(lambdaParams.Payload)
@@ -62,7 +62,7 @@ const invokeWithResponse = async (lambdaName, args) => {
     Payload: args
   }
 
-  debugLib.log(`Calling ${lambdaName} with args ${JSON.stringify(lambdaParams)} as RequestResponse.`)
+  debugLib.verbose(`Calling ${lambdaName} with args ${JSON.stringify(lambdaParams)} as RequestResponse.`)
 
   lambdaParams.ClientContext = JSON.stringify(lambdaParams.ClientContext)
   lambdaParams.Payload = JSON.stringify(lambdaParams.Payload)

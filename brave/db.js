@@ -104,10 +104,14 @@ const _makeGetIdFunc = (table, textColumn, useHash, client, value) => {
     }
 
     const upcertRs = await client.query(upcertQuery, upcertParams)
-    const rowId = upcertRs.rows[0].id
-    braveDebugLib.verbose(`${value} has ${table}.id = ${rowId}`)
-    idCache[queryValue] = rowId
-    return rowId
+    if (upcertRs && upcertRs.rows[0]) {
+      const rowId = upcertRs.rows[0].id
+      braveDebugLib.verbose(`${value} has ${table}.id = ${rowId}`)
+      idCache[queryValue] = rowId
+      return rowId
+    }
+
+    braveDebugLib.log(`Error: Unexpectedly couldn't find an id for ${value} in ${table}`)
   }
 }
 

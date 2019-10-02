@@ -123,7 +123,13 @@ const applyValidationRules = (initValues, rules) => {
 
     const validationFunc = value.validate
     if (validationFunc) {
-      const [isValid, msg] = validationFunc(initialValue)
+      let isValid, msg
+      try {
+        [isValid, msg] = validationFunc(initialValue)
+      } catch (e) {
+        const error = `Invalid validation config for value ${key}: ${e.toString()}`
+        return [false, error]
+      }
 
       if (isValid === false) {
         return [false, `${key}: ${msg}`]

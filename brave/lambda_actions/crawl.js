@@ -128,7 +128,14 @@ const validateArgs = async inputArgs => {
 }
 
 const selectETldPlusOneLinks = async (page, count = 3) => {
-  const links = await page.$$('a[href]')
+  let links
+  try {
+    links = await page.$$('a[href]')
+  } catch (e) {
+    braveDebugLib.verbose(`Unable to look for child links, page closed: ${e.toString()}`)
+    return []
+  }
+
   const sameETldLinks = new Set()
   const pageUrl = page.url()
   const mainETld = tldjsLib.getDomain(pageUrl)
@@ -244,7 +251,7 @@ const start = async args => {
   }
 
   page.removeListener('requestfinished', callbackHandler)
-  braveDebugLib.log(`Captured ${report.length} requests.`)
+  braveDebugLib.verbose(`Captured ${report.length} requests.`)
 
   // Check to see if we should go "deeper"
   if (args.currentDepth < args.depth) {
@@ -254,7 +261,7 @@ const start = async args => {
       if (!aChildUrl || aChildUrl.trim().length === 0) {
         continue
       }
-      braveDebugLib.log(`Queuing up child page: ${aChildUrl}.`)
+      braveDebugLib.verbose(`Queuing up child page: ${aChildUrl}.`)
       const jobDesc = Object.create(null)
       jobDesc.path = args.path.concat([i])
       jobDesc.batch = args.batch

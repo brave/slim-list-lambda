@@ -12,7 +12,7 @@ const debugLib = require('./debug')
 const write = async (queue, message) => {
   const msgFlat = typeof message === 'string' ? message : JSON.stringify(message)
   const sqsClient = new awsSdkLib.SQS({ apiVersion: '2012-11-05' })
-  debugLib.log(`Writing message ${msgFlat} to SQS: ${queue}`)
+  debugLib.verbose(`Writing message ${msgFlat} to SQS: ${queue}`)
 
   const sqsMessage = Object.create(null)
   sqsMessage.QueueUrl = queue

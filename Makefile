@@ -48,7 +48,7 @@ bundle:
 	find $(TMP_WORKSPACE)/node_modules/adblock-rs/native/target/release/ -type f -not -name libadblock_rs.so -delete
 	find $(TMP_WORKSPACE)/node_modules -type f -name "*.md" -delete
 	find $(TMP_WORKSPACE)/node_modules -type d -name "test" | xargs rm -rf
-	if [ ! -f -$(CHROME_HEADLESS_PATH) ]; then curl -L $(CHROME_HEADLESS_URL) --output $(CHROME_HEADLESS_ZIP_PATH) && unzip $(CHROME_HEADLESS_ZIP_PATH) -d $(TMP_RESOURCES) && rm $(CHROME_HEADLESS_ZIP_PATH); fi;
+	if [ ! -f $(CHROME_HEADLESS_PATH) ]; then curl -L $(CHROME_HEADLESS_URL) --output $(CHROME_HEADLESS_ZIP_PATH) && unzip $(CHROME_HEADLESS_ZIP_PATH) -d $(TMP_RESOURCES) && rm $(CHROME_HEADLESS_ZIP_PATH); fi;
 	cd $(TMP_WORKSPACE)/ && zip -r $(FUNCTION_NAME).zip *
 
 test-crawl-dispatch:
