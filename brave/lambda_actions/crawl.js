@@ -291,10 +291,7 @@ const start = async args => {
     userDataDir: braveResourcesLib.userDataDirPath(),
     args: [
       '--disable-gpu',
-      '--no-sandbox',
-      '--single-process',
-      '--disable-setuid-sandbox',
-      '--no-zygote'
+      '--no-sandbox'
     ]
   }
 
@@ -310,8 +307,13 @@ const start = async args => {
 
   braveDebugLib.verbose('Wrapping up and closing puppeteer.')
   try {
-    await browser.close()
+    browser.close()
   } catch (_) {}
+
+  // We can't wait for the browser to always close cleanly, because it often
+  // will hang indefinitely.  So we just issue the request to close and wait
+  // 10 sec.
+  setTimeout(_ => {}, 10000)
 }
 
 module.exports = {
