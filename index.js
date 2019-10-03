@@ -46,10 +46,10 @@ const dispatch = async lambdaEvent => {
     }
 
     braveDebugLib.verbose(`Starting action: ${lambdaEvent.action}`)
-    braveDebugLib.verbose(`Args: ${JSON.stringify(lambdaEvent)}`)
     await lambdaModule.start(msg)
+    braveDebugLib.verbose('Finished processing report')
   } catch (error) {
-    console.log(error)
+    console.error(error)
     throw error
   }
 }

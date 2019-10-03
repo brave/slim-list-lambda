@@ -109,7 +109,7 @@ const validateArgs = async inputArgs => {
     },
     secs: {
       validate: braveValidationLib.isPositiveNumber,
-      default: 30000
+      default: 15000
     },
     path: {
       validate: braveValidationLib.allOfType.bind(undefined, 'number'),
@@ -309,10 +309,6 @@ const start = async args => {
   }
 
   braveDebugLib.verbose('Wrapping up and closing puppeteer.')
-  try {
-    await page.close()
-  } catch (_) {}
-
   try {
     await browser.close()
   } catch (_) {}

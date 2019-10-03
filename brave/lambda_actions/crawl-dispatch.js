@@ -117,7 +117,7 @@ const validateArgs = async inputArgs => {
     },
     depth: {
       validate: braveValidationLib.isPositiveNumber,
-      default: 2
+      default: 1
     },
     breath: {
       validate: braveValidationLib.isPositiveNumber,
