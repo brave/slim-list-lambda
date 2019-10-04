@@ -5,10 +5,6 @@ TMP_RESOURCES := $(TMP_WORKSPACE)/resources
 
 DOCKER_IMAGE := lambci/lambda:nodejs8.10
 
-CHROME_HEADLESS_ZIP_PATH := $(TMP_RESOURCES)/chromium_headless.zip
-CHROME_HEADLESS_PATH := $(TMP_RESOURCES)/headless-chromium
-CHROME_HEADLESS_URL := https://github.com/adieuadieu/serverless-chrome/releases/download/v1.0.0-55/stable-headless-chromium-amazonlinux-2017-03.zip
-
 FUNCTION_NAME=slim-list-generator
 FUNCTION_S3_BUCKET=abp-lambda-funcs20181113170947211800000001
 
@@ -48,7 +44,6 @@ bundle:
 	find $(TMP_WORKSPACE)/node_modules/adblock-rs/native/target/release/ -type f -not -name libadblock_rs.so -delete
 	find $(TMP_WORKSPACE)/node_modules -type f -name "*.md" -delete
 	find $(TMP_WORKSPACE)/node_modules -type d -name "test" | xargs rm -rf
-	if [ ! -f $(CHROME_HEADLESS_PATH) ]; then curl -L $(CHROME_HEADLESS_URL) --output $(CHROME_HEADLESS_ZIP_PATH) && unzip $(CHROME_HEADLESS_ZIP_PATH) -d $(TMP_RESOURCES) && rm $(CHROME_HEADLESS_ZIP_PATH); fi;
 	cd $(TMP_WORKSPACE)/ && zip -r $(FUNCTION_NAME).zip *
 
 test-crawl-dispatch:
@@ -60,7 +55,7 @@ test-crawl-dispatch:
 test-crawl:
 	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) -e DEBUG=1 -e VERBOSE=1 -it -v \
 		$(PWD)/$(TMP_WORKSPACE):/var/task $(DOCKER_IMAGE) index.dispatch \
-		'{"action": "crawl", "url": "https://cnn.com", "depth": 2}'
+		'{"action": "crawl", "url": "https://cnn.com", "depth": 2, "sqsRecordQueue": "https://sqs.us-east-1.amazonaws.com/275005321946/brave-slim-list-record"}'
 
 test-record:
 	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \

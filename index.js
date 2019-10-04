@@ -4,8 +4,6 @@ const braveDebugLib = require('./brave/debug')
 const braveLambdaLib = require('./brave/lambda')
 
 const dispatch = async lambdaEvent => {
-  await braveLambdaLib.cleanEnv()
-
   try {
     if (typeof lambdaEvent === 'string') {
       lambdaEvent = JSON.parse(lambdaEvent)
@@ -21,6 +19,7 @@ const dispatch = async lambdaEvent => {
     }
 
     braveDebugLib.log(`Invocation: ${JSON.stringify(lambdaEvent)}`)
+    await braveLambdaLib.cleanEnv()
     let lambdaModule
 
     switch (lambdaEvent.action) {

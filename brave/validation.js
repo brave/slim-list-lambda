@@ -1,5 +1,7 @@
 'use strict'
 
+const urlLib = require('url')
+
 /**
  * @file
  * Common functions used for validating lambda arguments.
@@ -8,6 +10,25 @@
  * If the given values are valid, the returns [true, undefined].  Otherwise,
  * returns false and a string describing the problem.
  */
+
+const isWebUrl = possibleUrl => {
+  let urlObj
+  if (typeof possibleUrl === 'string') {
+    try {
+      urlObj = new urlLib.URL(possibleUrl)
+    } catch (e) {
+      return [false, `Given argument is not a valid url: ${possibleUrl}`]
+    }
+  } else {
+    urlObj = possibleUrl
+  }
+
+  if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+    return [true, undefined]
+  }
+
+  return [false, `Url protocol is not http(s), its ${urlObj.protocol}`]
+}
 
 const allOfTypeAndTruthy = (typeAsString, list) => {
   if (Array.isArray(list) === false) {
@@ -142,11 +163,12 @@ const applyValidationRules = (initValues, rules) => {
 }
 
 module.exports = {
+  applyValidationRules,
   allOfType,
   allOfTypeAndTruthy,
   ofTypeAndTruthy,
+  isLessThanOrEqual,
   isPositiveNumber,
   isStringOfLength,
-  isLessThanOrEqual,
-  applyValidationRules
+  isWebUrl
 }

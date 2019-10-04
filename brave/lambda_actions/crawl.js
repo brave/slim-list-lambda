@@ -2,14 +2,13 @@
 
 const urlLib = require('url')
 
-const puppeteerLib = require('puppeteer-core')
+const chromiumLib = require('chrome-aws-lambda')
+const puppeteerLib = chromiumLib.puppeteer
 const randomJsLib = require('random-js')
 const tldjsLib = require('tldjs')
-const validUrlLib = require('valid-url')
 
 const braveDebugLib = require('../debug')
 const braveHashLib = require('../hash')
-const braveResourcesLib = require('../resources')
 const braveSQSLib = require('../sqs')
 const braveS3Lib = require('../s3')
 const braveValidationLib = require('../validation')
@@ -51,7 +50,10 @@ const braveValidationLib = require('../validation')
  *  - key {string}
  *      The key in the bucket to store all information related to this crawl.
  *  - sqsQueue {string}
- *      The SQS queue to write any additional jobs into.
+ *      The SQS queue to write any additional crawling jobs into (i.e. child
+ *      pages).
+ *  - sqsRecordQueue {string}
+ *      The SQS queue to write recording jobs into.
  *
  * Optional args:
  *  - secs {number}
@@ -81,7 +83,7 @@ const validateArgs = async inputArgs => {
       validate: braveValidationLib.isStringOfLength.bind(undefined, 36)
     },
     url: {
-      validate: validUrlLib.isWebUri
+      validate: braveValidationLib.isWebUrl
     },
     domain: {
       validate: stringCheck
@@ -147,15 +149,17 @@ const selectETldPlusOneLinks = async (page, count = 3) => {
       const hrefUrl = new urlLib.URL(hrefValue.trim(), pageUrl)
       hrefUrl.hash = ''
       hrefUrl.search = ''
-      const childUrlString = hrefUrl.toString()
-      if (validUrlLib.isWebUri(childUrlString) === false) {
+
+      if (hrefUrl.protocol !== 'http:' && hrefUrl.protocol !== 'https:') {
         continue
       }
+
+      const childUrlString = hrefUrl.toString()
       const childLinkETld = tldjsLib.getDomain(childUrlString)
       if (childLinkETld !== mainETld) {
         continue
       }
-      if (!childUrlString || childUrlString.trim().length === 0) {
+      if (!childUrlString || childUrlString.length === 0) {
         continue
       }
       sameETldLinks.add(childUrlString)
@@ -179,15 +183,18 @@ const onRequestCompleteCallback = async (requestStore, request) => {
     if (frame === null) {
       return
     }
+    const response = await request.response()
+    if (!response) {
+      return
+    }
 
     const requestUrl = request.url()
     braveDebugLib.verbose(`Saw request to: ${requestUrl}`)
 
     const requestType = request.resourceType()
-    const response = await request.response()
-
-    const responseCode = response.status()
     let responseHash = null
+    const responseCode = response.status()
+
     if (response.ok()) {
       const buffer = await response.buffer()
       responseHash = braveHashLib.sha256(buffer)
@@ -286,17 +293,13 @@ const _crawlPage = async (page, args) => {
 }
 
 const start = async args => {
-  const puppeteerLaunchArgs = {
-    executablePath: braveResourcesLib.chromiumPath(),
-    userDataDir: braveResourcesLib.userDataDirPath(),
-    args: [
-      '--disable-gpu',
-      '--no-sandbox'
-    ]
-  }
+  const browser = await puppeteerLib.launch({
+    args: chromiumLib.args,
+    defaultViewport: chromiumLib.defaultViewport,
+    executablePath: await chromiumLib.executablePath,
+    headless: chromiumLib.headless
+  })
 
-  braveDebugLib.verbose(`Launching chrome headless with: ${JSON.stringify(puppeteerLaunchArgs)}`)
-  const browser = await puppeteerLib.launch(puppeteerLaunchArgs)
   const page = await browser.newPage()
 
   try {
