@@ -149,7 +149,7 @@ Resources:
         Fn::Join:
           - ''
           - - '/aws/lambda/'
-            - !Ref SlimListDispatchLambda
+            - !Ref SlimListCrawlDispatchLambda
       RetentionInDays: 7
 
   AliasCrawlDispatchErrorMetricGreaterThanZeroAlarm:
