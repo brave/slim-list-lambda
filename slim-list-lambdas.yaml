@@ -122,7 +122,7 @@ Resources:
       Tracing: !Ref TracingFlag
       DeadLetterQueue:
         Type: SQS
-        TargetArn: !Ref SlimListCrawlDispatchdDLQ
+        TargetArn: !Ref SlimListCrawlDispatchDLQ
       Role: !Ref SlimListCrawlDispatchLambdaExecutionRole
       AutoPublishAlias: !Ref DeploymentEnvironment
       DeploymentPreference:
