@@ -127,7 +127,7 @@ Resources:
       Tracing: !Ref TracingFlag
       DeadLetterQueue:
         Type: SQS
-        TargetArn: !Ref SlimListCrawlDispatchdDLQ 
+        TargetArn: !Ref SlimListCrawlDispatchdDLQ
       Role: !Ref SlimListCrawlDispatchLambdaExecutionRole
       AutoPublishAlias: !Ref DeploymentEnvironment
       DeploymentPreference:
@@ -219,11 +219,11 @@ Resources:
         Security: private
         Owner: brave-core
         Environment: !Ref DeploymentEnvironment
-        BusinessUnit: brave-core 
+        BusinessUnit: brave-core
         Project: "https://github.com/brave/devops/projects/29"
         RequestID: "https://github.com/brave/devops/issues/2112"
 
-  SlimListCrawlDispatchLambda:
+  SlimListCrawlLambda:
     Type: "AWS::Serverless::Function"
     Properties:
       Description: "Lambda function that processes information
@@ -250,7 +250,7 @@ Resources:
       Tracing: !Ref TracingFlag
       DeadLetterQueue:
         Type: SQS
-        TargetArn: !Ref SlimListCrawlDLQ 
+        TargetArn: !Ref SlimListCrawlDLQ
       Role: !Ref SlimListCrawlLambdaExecutionRole
       AutoPublishAlias: !Ref DeploymentEnvironment
       DeploymentPreference:
@@ -342,7 +342,7 @@ Resources:
         Security: private
         Owner: brave-core
         Environment: !Ref DeploymentEnvironment
-        BusinessUnit: brave-core 
+        BusinessUnit: brave-core
         Project: "https://github.com/brave/devops/projects/29"
         RequestID: "https://github.com/brave/devops/issues/2112"
 
@@ -373,7 +373,7 @@ Resources:
       Tracing: !Ref TracingFlag
       DeadLetterQueue:
         Type: SQS
-        TargetArn: !Ref SlimListRecordDLQ 
+        TargetArn: !Ref SlimListRecordDLQ
       Role: !Ref SlimListRecordLambdaExecutionRole
       AutoPublishAlias: !Ref DeploymentEnvironment
       DeploymentPreference:
@@ -465,7 +465,7 @@ Resources:
         Security: private
         Owner: brave-core
         Environment: !Ref DeploymentEnvironment
-        BusinessUnit: brave-core 
+        BusinessUnit: brave-core
         Project: "https://github.com/brave/devops/projects/29"
         RequestID: "https://github.com/brave/devops/issues/2112"
 
@@ -496,7 +496,7 @@ Resources:
       Tracing: !Ref TracingFlag
       DeadLetterQueue:
         Type: SQS
-        TargetArn: !Ref SlimListBuildDLQ 
+        TargetArn: !Ref SlimListBuildDLQ
       Role: !Ref SlimListBuildLambdaExecutionRole
       AutoPublishAlias: !Ref DeploymentEnvironment
       DeploymentPreference:
@@ -588,6 +588,6 @@ Resources:
         Security: private
         Owner: brave-core
         Environment: !Ref DeploymentEnvironment
-        BusinessUnit: brave-core 
+        BusinessUnit: brave-core
         Project: "https://github.com/brave/devops/projects/29"
         RequestID: "https://github.com/brave/devops/issues/2112"
