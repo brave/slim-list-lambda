@@ -65,7 +65,7 @@ Parameters:
   DeploymentEnvironment:
     Description: "Slimi List Deployment Environment"
     Type: "AWS::SSM::Parameter::Value<String>"
-    Default: "/DeploymentConfig/SlimListRewards/DeploymentEnvironment"
+    Default: "/DeploymentConfig/SlimList/DeploymentEnvironment"
   SlimListSecurityGroup:
     Description: "Slim List Security Group"
     Type: "AWS::SSM::Parameter::Value<String>"
