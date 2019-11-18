@@ -272,7 +272,7 @@ Resources:
         Fn::Join:
           - ''
           - - '/aws/lambda/'
-            - !Ref SlimListLambda
+            - !Ref SlimListCrawlLambda
       RetentionInDays: 7
 
   AliasCrawlErrorMetricGreaterThanZeroAlarm:
