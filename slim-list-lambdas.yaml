@@ -77,11 +77,6 @@ Parameters:
     Description: "Slim List Private Subnet Three"
     Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/DeploymentConfig/VPC/Lambda/USW2AZ3PrivateSubnetId"
-  LambdaBucket:
-    Description: "Slim List Lambda Bucket"
-    Type: "AWS::SSM::Parameter::Value<String>"
-    Default: "/DeploymentConfig/SlimList/Lambda/\
-      SlimList/SlimListLambdaBucket"
   SlimListCrawlDLQ:
     Description: "Slim List Crawl Lambda DLQ"
     Type: "AWS::SSM::Parameter::Value<String>"
@@ -107,9 +102,7 @@ Resources:
         by a CloudWatch Event cron to gather adblock lists."
       Handler: "index.dispatch"
       Runtime: nodejs8.10
-      CodeUri:
-        Bucket: !Ref LambdaBucket
-        Key: slim-list-generator.zip
+      CodeUri: ./slim-list-generator.zip
       Timeout: 600
       MemorySize: 1600
       VpcConfig:
@@ -232,9 +225,7 @@ Resources:
         sent through brave-slim-list SQS queue."
       Handler: "index.dispatch"
       Runtime: nodejs8.10
-      CodeUri:
-        Bucket: !Ref LambdaBucket
-        Key: slim-list-generator.zip
+      CodeUri: ./slim-list-generator.zip
       Timeout: 600
       MemorySize: 1600
       VpcConfig:
@@ -357,9 +348,7 @@ Resources:
         from the SQS queue brave-slim-list-record"
       Handler: "index.dispatch"
       Runtime: nodejs8.10
-      CodeUri:
-        Bucket: !Ref LambdaBucket
-        Key: slim-list-generator.zip
+      CodeUri: ./slim-list-generator.zip
       Timeout: 600
       MemorySize: 1600
       VpcConfig:
@@ -482,9 +471,7 @@ Resources:
         list in publicly readable S3 bucket"
       Handler: "index.dispatch"
       Runtime: nodejs8.10
-      CodeUri:
-        Bucket: !Ref LambdaBucket
-        Key: slim-list-generator.zip
+      CodeUri: ./slim-list-generator.zip
       Timeout: 600
       MemorySize: 1600
       VpcConfig:
