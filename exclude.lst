@@ -1,6 +1,4 @@
 *.sh
 *.yaml
 *.lst
-*.md
-*.json
 Makefile
