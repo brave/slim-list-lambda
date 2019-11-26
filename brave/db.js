@@ -119,7 +119,7 @@ const getClient = async _ => {
   const client = new pgLib.Client({
     user: _config.pg.username,
     host: _config.pg.host,
-    database: 'slim-list',
+    database: 'slim_lists_db',
     password: _config.pg.password,
     port: _config.pg.port
   })
