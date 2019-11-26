@@ -115,6 +115,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
+          PG_USERNAME: !Ref DatabaseUserName
           PG_HOSTNAME: !Ref DatabaseHostName
           PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
           PG_PORT: !Ref DatabasePort
@@ -238,6 +239,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
+          PG_USERNAME: !Ref DatabaseUserName
           PG_HOSTNAME: !Ref DatabaseHostName
           PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
           PG_PORT: !Ref DatabasePort
@@ -361,6 +363,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
+          PG_USERNAME: !Ref DatabaseUserName
           PG_HOSTNAME: !Ref DatabaseHostName
           PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
           PG_PORT: !Ref DatabasePort
@@ -484,6 +487,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
+          PG_USERNAME: !Ref DatabaseUserName
           PG_HOSTNAME: !Ref DatabaseHostName
           PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
           PG_PORT: !Ref DatabasePort
