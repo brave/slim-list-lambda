@@ -5,13 +5,14 @@
  * Common functions for reading and writing data to S3.
  */
 
-const awsSdkLib = require('aws-sdk')
+const AWSXRay = require('aws-xray-sdk-core');
+const awsSdkLib = AWSXRay.captureAWS(require('aws-sdk'));
 
 const debugLib = require('./debug')
 
 const globalS3 = new awsSdkLib.S3({
   apiVersion: '2006-03-01',
-  region: 'us-east-1'
+  region: 'us-west-2'
 })
 
 const list = async (bucket, prefix) => {
