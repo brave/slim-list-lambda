@@ -288,6 +288,7 @@ const _crawlPage = async (page, args) => {
   sqsMessage.batch = args.batch
   sqsMessage.domain = args.domain
   sqsMessage.position = pathKey
+  sqsMessage.bucket = args.bucket
   sqsMessage.action = 'record'
   await braveSQSLib.write(args.sqsRecordQueue, JSON.stringify(sqsMessage))
 }
