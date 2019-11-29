@@ -38,8 +38,7 @@ const validateArgs = async inputArgs => {
       validate: braveValidationLib.isStringOfLength.bind(undefined, 36)
     },
     bucket: {
-      validate: stringCheck,
-      default: 'com.brave.research.slim-list'
+      validate: stringCheck
     },
     domain: {
       validate: stringCheck
