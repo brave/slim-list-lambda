@@ -1,6 +1,6 @@
 {
   "Parameters" : {
-    "TracingFlag" : "PassThrough",
+    "TracingFlag" : "Active",
     "DebugFlag": 0,
     "VerboseFlag": 0
   }
