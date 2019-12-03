@@ -13,15 +13,12 @@ Parameters:
       - PassThrough
       - Active
     Type: String
-    Default: PassThrough
   DebugFlag:
     Description: "Flag to enable debugging. Default setting is 0."
     Type: Number
-    Default: 0
   VerboseFlag:
     Description: "Flag to defined verbosity. Default setting is 0."
     Type: Number
-    Default: 0
   SlimListBuildLambdaExecutionRole:
     Description: "IAM Role for Slim List Build Lambda"
     Type: "AWS::SSM::Parameter::Value<String>"
