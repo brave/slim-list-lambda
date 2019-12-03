@@ -64,7 +64,7 @@ const invoke = async (lambdaName, args) => {
 
   debugLib.verbose(`Calling ${lambdaName} with args ${JSON.stringify(lambdaParams)} as Event.`)
   
-  var seg = AWSXRay.getSegment():
+  var seg = AWSXRay.getSegment();
   seg.addAnnotation('event_lambda', lambdaName);
   seg.addAnnotation('event_params', JSON.stringify(lambdaParams));
 
@@ -85,7 +85,7 @@ const invokeWithResponse = async (lambdaName, args) => {
 
   debugLib.verbose(`Calling ${lambdaName} with args ${JSON.stringify(lambdaParams)} as RequestResponse.`)
 
-  var seg = AWSXRay.getSegment():
+  var seg = AWSXRay.getSegment();
   seg.addAnnotation('request_lambda', lambdaName);
   seg.addAnnotation('request_params', JSON.stringify(lambdaParams));
 
