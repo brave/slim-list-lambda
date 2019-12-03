@@ -22,6 +22,9 @@ const list = async (bucket, prefix) => {
     Prefix: prefix
   }
 
+  var seg = AWSXRay.getSegment();
+  seg.addAnnotation('list_s3_object', prefix);
+
   const result = await globalS3.listObjectsV2(s3Query).promise()
   debugLib.verbose(`Received ${result.KeyCount} results in S3 for query.`)
 
@@ -40,6 +43,9 @@ const read = async (bucket, key) => {
     Key: key
   }
 
+  var seg = AWSXRay.getSegment();
+  seg.addAnnotation('read_s3_object', key);
+
   const result = await globalS3.getObject(s3Query).promise()
   debugLib.verbose(`Received file of type ${result.ContentType} of size ${result.ContentLength}.`)
 
@@ -55,6 +61,10 @@ const write = async (bucket, key, bufferOrString) => {
   }
 
   await globalS3.putObject(s3Query).promise()
+
+  var seg = AWSXRay.getSegment();
+  seg.addAnnotation('write_s3_object', key);
+
   debugLib.verbose(`Wrote file to s3://${bucket}/${key}`)
   return true
 }
