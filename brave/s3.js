@@ -15,6 +15,8 @@ const globalS3 = new awsSdkLib.S3({
   region: 'us-west-2'
 })
 
+AWSXRay.enableManualMode()
+
 const list = async (bucket, prefix) => {
   debugLib.verbose(`Listing items in S3: s3://${bucket}/${prefix}/*`)
   const s3Query = {
@@ -23,10 +25,12 @@ const list = async (bucket, prefix) => {
   }
 
   const seg = AWSXRay.getSegment();
-  seg.addAnnotation('list_s3_object', prefix);
+  const s3_seg = seg.addNewSubsegment('S3 List');
+  s3_seg.addAnnotation('list_s3_object', prefix);
 
   const result = await globalS3.listObjectsV2(s3Query).promise()
   debugLib.verbose(`Received ${result.KeyCount} results in S3 for query.`)
+  s3_seg.close() 
 
   const matchingKeys = []
   for (const object of result.Contents) {
@@ -44,10 +48,12 @@ const read = async (bucket, key) => {
   }
 
   const seg = AWSXRay.getSegment();
-  seg.addAnnotation('read_s3_object', key);
+  const s3_seg = seg.addNewSubsegment('S3 Read');
+  s3_seg.addAnnotation('read_s3_object', key);
 
   const result = await globalS3.getObject(s3Query).promise()
   debugLib.verbose(`Received file of type ${result.ContentType} of size ${result.ContentLength}.`)
+  s3_seg.close() 
 
   return result.Body
 }
@@ -60,10 +66,13 @@ const write = async (bucket, key, bufferOrString) => {
     Body: bufferOrString
   }
 
-  await globalS3.putObject(s3Query).promise()
-
   const seg = AWSXRay.getSegment();
-  seg.addAnnotation('write_s3_object', key);
+  const s3_seg = seg.addNewSubsegment('S3 Read');
+  s3_seg.addAnnotation('write_s3_object', key);
+
+  await globalS3.putObject(s3Query).promise()
+  s3_seg.close() 
+
 
   debugLib.verbose(`Wrote file to s3://${bucket}/${key}`)
   return true
