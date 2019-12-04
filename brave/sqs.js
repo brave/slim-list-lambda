@@ -15,7 +15,7 @@ const write = async (queue, message) => {
   const sqsClient = new awsSdkLib.SQS({ apiVersion: '2012-11-05' })
   debugLib.verbose(`Writing message ${msgFlat} to SQS: ${queue}`)
 
-  var seg = AWSXRay.getSegment();
+  const seg = AWSXRay.getSegment();
   seg.addAnnotation('sqs_queue', queue);
   seg.addAnnotation('sqs_message', msgFlat);
 
