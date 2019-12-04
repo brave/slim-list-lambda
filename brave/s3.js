@@ -24,7 +24,7 @@ const list = async (bucket, prefix) => {
     Prefix: prefix
   }
 
-  const seg = AWSXRay.getSegment();
+  const seg = new AWSXRay.Segment('S3ListFunction');
   const s3_seg = seg.addNewSubsegment('S3 List');
   s3_seg.addAnnotation('list_s3_object', prefix);
 
@@ -47,7 +47,7 @@ const read = async (bucket, key) => {
     Key: key
   }
 
-  const seg = AWSXRay.getSegment();
+  const seg = new AWSXRay.Segment('S3ReadFunction');
   const s3_seg = seg.addNewSubsegment('S3 Read');
   s3_seg.addAnnotation('read_s3_object', key);
 
@@ -66,7 +66,7 @@ const write = async (bucket, key, bufferOrString) => {
     Body: bufferOrString
   }
 
-  const seg = AWSXRay.getSegment();
+  const seg = new AWSXRay.Segment('S3WriteFunction');
   const s3_seg = seg.addNewSubsegment('S3 Read');
   s3_seg.addAnnotation('write_s3_object', key);
 
