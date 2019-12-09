@@ -21,7 +21,7 @@ Parameters:
   VerboseFlag:
     Description: "Flag to defined verbosity. Default setting is 0."
     Type: Number
-    Default: 1
+    Default: 0
   SlimListBuildLambdaExecutionRole:
     Description: "IAM Role for Slim List Build Lambda"
     Type: "AWS::SSM::Parameter::Value<String>"
@@ -104,7 +104,7 @@ Resources:
       Runtime: nodejs8.10
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
-      MemorySize: 1600
+      MemorySize: 2048
       VpcConfig:
         SecurityGroupIds:
           - !Ref SlimListSecurityGroup
@@ -228,7 +228,7 @@ Resources:
       Runtime: nodejs8.10
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
-      MemorySize: 1600
+      MemorySize: 2048
       VpcConfig:
         SecurityGroupIds:
           - !Ref SlimListSecurityGroup
@@ -352,7 +352,7 @@ Resources:
       Runtime: nodejs8.10
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
-      MemorySize: 1600
+      MemorySize: 2048
       VpcConfig:
         SecurityGroupIds:
           - !Ref SlimListSecurityGroup
@@ -476,7 +476,7 @@ Resources:
       Runtime: nodejs8.10
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
-      MemorySize: 1600
+      MemorySize: 2048
       VpcConfig:
         SecurityGroupIds:
           - !Ref SlimListSecurityGroup
