@@ -4,7 +4,6 @@
  * @file
  * Functions for recording data to RDS.
  */
-
 const AWSXRay = require('aws-xray-sdk');
 const pgLib = AWSXRay.capturePostgres(require('pg'));
 
@@ -45,74 +44,125 @@ const _insertWithId = async (client, table, colToValueMap) => {
   return insertRs.rows[0].id
 }
 
-const _makeGetIdFunc = (table, textColumn, useHash, client, value) => {
+const _makeGetIdHashFunc = (table, textColumn) => {
   const idCache = Object.create(null)
-  let upcertQuery
-
-  if (useHash === true) {
-    upcertQuery = `
-      WITH input_rows(${textColumn}, sha256) AS (
-        VALUES ($1::text, $2::character(64))
+  const selectQuery = `
+    SELECT
+      id
+    FROM
+      ${table}
+    WHERE
+      sha256 = $1::character(64)
+    LIMIT
+      1;
+  `
+  const insertQuery = `
+    INSERT INTO
+      ${table} (
+        ${textColumn},
+        sha256
       )
-      , ins AS (
-        INSERT INTO ${table} (${textColumn}, sha256)
-        SELECT * FROM input_rows
-        ON CONFLICT (sha256) DO NOTHING
-        RETURNING id
-      )
-      SELECT 'i' AS source, id
-      FROM   ins
-      UNION  ALL
-      SELECT 's' AS source, t.id
-      FROM   input_rows
-      JOIN   ${table} t USING (sha256);`
-  } else {
-    upcertQuery = `
-      WITH input_rows(${textColumn}) AS (
-        VALUES ($1::text)
-      )
-      , ins AS (
-        INSERT INTO ${table} (${textColumn})
-        SELECT * FROM input_rows
-        ON CONFLICT (${textColumn}) DO NOTHING
-        RETURNING id
-      )
-      SELECT 'i' AS source, id
-      FROM   ins
-      UNION  ALL
-      SELECT 's' AS source, t.id
-      FROM   input_rows
-      JOIN   ${table} t USING (${textColumn});`
-  }
+    VALUES (
+      $1::text,
+      $2::character(64)
+    )
+    ON CONFLICT
+      (sha256) DO NOTHING
+    RETURNING
+      id;
+  `
 
   return async (client, value) => {
-    braveDebugLib.verbose(`Searching for ${value} in ${table}`)
+    const hashValue = braveHashLib.sha256(value)
 
-    let queryValue, upcertParams
-
-    if (useHash === true) {
-      queryValue = braveHashLib.sha256(value)
-      upcertParams = [value, queryValue]
-    } else {
-      queryValue = value
-      upcertParams = [value]
-    }
-
-    if (idCache[queryValue] !== undefined) {
-      const cachedValue = idCache[queryValue]
+    if (idCache[hashValue] !== undefined) {
+      const cachedValue = idCache[hashValue]
       braveDebugLib.verbose(`Found cached value of ${cachedValue} for ${value} in ${table}`)
       return cachedValue
     }
 
-    const upcertRs = await client.query(upcertQuery, upcertParams)
-    if (upcertRs && upcertRs.rows[0]) {
-      const rowId = upcertRs.rows[0].id
+    await client.query('BEGIN')
+    const selectParams = [hashValue]
+    const selectRs = await client.query(selectQuery, selectParams)
+    if (selectRs && selectRs.rows[0]) {
+      const rowId = selectRs.rows[0].id
       braveDebugLib.verbose(`${value} has ${table}.id = ${rowId}`)
-      idCache[queryValue] = rowId
+      idCache[hashValue] = rowId
+      await client.query('END')
       return rowId
     }
 
-    braveDebugLib.log(`Error: Unexpectedly couldn't find an id for ${value} in ${table}`)
+    const insertParams = [value, hashValue]
+    const insertRs = await client.query(insertQuery, insertParams)
+    if (insertRs && insertRs.rows[0]) {
+      const rowId = insertRs.rows[0].id
+      braveDebugLib.verbose(`${value} has ${table}.id = ${rowId}`)
+      idCache[hashValue] = rowId
+      await client.query('END')
+      return rowId
+    }
+
+    await client.query('END')
+    throw new Error(`Error: Unexpectedly couldn't find an id for ${value} in ${table}`)
+  }
+}
+
+const _makeGetIdFunc = (table, textColumn) => {
+  const idCache = Object.create(null)
+  const selectQuery = `
+    SELECT
+      id
+    FROM
+      ${table}
+    WHERE
+      ${textColumn} = $1::text
+    LIMIT
+      1;
+  `
+  const insertQuery = `
+    INSERT INTO
+      ${table} (
+        ${textColumn}
+      )
+    VALUES (
+      $1::text
+    )
+    ON CONFLICT
+      (${textColumn}) DO NOTHING
+    RETURNING
+      id;
+  `
+
+  return async (client, value) => {
+    if (idCache[value] !== undefined) {
+      const cachedValue = idCache[value]
+      braveDebugLib.verbose(`Found cached value of ${cachedValue} for ${value} in ${table}`)
+      return cachedValue
+    }
+
+    await client.query('BEGIN')
+    const selectParams = [value]
+    const selectRs = await client.query(selectQuery, selectParams)
+    if (selectRs && selectRs.rows[0]) {
+      const rowId = selectRs.rows[0].id
+      braveDebugLib.verbose(`${value} has ${table}.id = ${rowId}`)
+      idCache[value] = rowId
+      await client.query('END')
+      return rowId
+    }
+
+    const insertParams = [value, value]
+    const insertRs = await client.query(insertQuery, insertParams)
+    if (insertRs && insertRs.rows[0]) {
+      const rowId = insertRs.rows[0].id
+      braveDebugLib.verbose(`${value} has ${table}.id = ${rowId}`)
+      idCache[value] = rowId
+      await client.query('END')
+      return rowId
+    }
+
+    await client.query('END')
+    throw new Error(`Error: Unexpectedly couldn't find an id for ${value} in ${table}`)
   }
 }
 
@@ -159,12 +209,11 @@ const _idForBatch = async (client, batchUuid) => {
   return batchId
 }
 
-_makeGetIdFunc('batches', 'batch', false)
-const _idForDomain = _makeGetIdFunc('domains', 'domain', true)
-const _idForRule = _makeGetIdFunc('rules', 'rule', true)
-const _idForUrl = _makeGetIdFunc('urls', 'url', true)
-const _idForTag = _makeGetIdFunc('tags', 'name', false)
-const _idForRequestType = _makeGetIdFunc('request_types', 'name', true)
+const _idForDomain = _makeGetIdHashFunc('domains', 'domain')
+const _idForRule = _makeGetIdHashFunc('rules', 'rule')
+const _idForUrl = _makeGetIdHashFunc('urls', 'url')
+const _idForTag = _makeGetIdFunc('tags', 'name')
+const _idForRequestType = _makeGetIdHashFunc('request_types', 'name')
 
 const recordBatchWithTags = async (client, batch, timestamp, tags) => {
   const batchId = await _insertWithId(client, 'batches', {
@@ -275,7 +324,7 @@ const recordFilterRules = async (client, filterListUrl, timestamp,
 const _idForPage = async (client, batch, domain, pageUrl, depth, breath, timestamp) => {
   const batchId = await _idForBatch(client, batch)
   const domainId = await _idForDomain(client, domain)
-  const pageUrlId = await _idForUrl(client, pageUrl)
+  const pageUrlId = await _idForUrl(client, pageUrl.trim())
 
   return _insertWithId(client, 'pages', {
     url_id: pageUrlId,
@@ -335,7 +384,7 @@ const _recordBlockedRequest = async (client, pageId, timestamp, parentFrameId,
     url_id: requestUrlId,
     frame_id: dbFrameId,
     request_type_id: requestTypeId,
-    is_blocked: true,
+    is_blocked: (exceptingRuleId === null),
     rule_id: blockingRuleId,
     excepting_rule_id: exceptingRuleId,
     response_sha256: responseHash,
