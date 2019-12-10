@@ -369,6 +369,7 @@ Resources:
           PG_PORT: !Ref DatabasePort
           VERBOSE: !Ref VerboseFlag
       Tracing: !Ref TracingFlag
+      ReservedConcurrentExecutions: 30
       DeadLetterQueue:
         Type: SQS
         TargetArn: !Ref SlimListRecordDLQ
