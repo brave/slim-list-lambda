@@ -8,4 +8,5 @@ curl https://sh.rustup.rs -sSf > /tmp/sh.rustup.rs;
 sh /tmp/sh.rustup.rs -y;
 source ~/.cargo/env;
 npm install;
+npm i npm@latest -g;
 npm audit fix;
