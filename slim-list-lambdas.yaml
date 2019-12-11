@@ -61,22 +61,6 @@ Parameters:
     Description: "Slimi List Deployment Environment"
     Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/DeploymentConfig/SlimList/DeploymentEnvironment"
-  SlimListSecurityGroup:
-    Description: "Slim List Security Group"
-    Type: "AWS::SSM::Parameter::Value<String>"
-    Default: "/DeploymentConfig/VPC/Lambda/SecurityGroupId"
-  SlimListSubnetOne:
-    Description: "Slim List Private Subnet One"
-    Type: "AWS::SSM::Parameter::Value<String>"
-    Default: "/DeploymentConfig/VPC/Lambda/USW2AZ1PrivateSubnetId"
-  SlimListSubnetTwo:
-    Description: "Slim List Private Subnet Two"
-    Type: "AWS::SSM::Parameter::Value<String>"
-    Default: "/DeploymentConfig/VPC/Lambda/USW2AZ2PrivateSubnetId"
-  SlimListSubnetThree:
-    Description: "Slim List Private Subnet Three"
-    Type: "AWS::SSM::Parameter::Value<String>"
-    Default: "/DeploymentConfig/VPC/Lambda/USW2AZ3PrivateSubnetId"
   SlimListCrawlDLQ:
     Description: "Slim List Crawl Lambda DLQ"
     Type: "AWS::SSM::Parameter::Value<String>"
@@ -105,13 +89,6 @@ Resources:
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref SlimListSecurityGroup
-        SubnetIds:
-          - !Ref SlimListSubnetOne
-          - !Ref SlimListSubnetTwo
-          - !Ref SlimListSubnetThree
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
@@ -229,13 +206,6 @@ Resources:
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref SlimListSecurityGroup
-        SubnetIds:
-          - !Ref SlimListSubnetOne
-          - !Ref SlimListSubnetTwo
-          - !Ref SlimListSubnetThree
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
@@ -353,13 +323,6 @@ Resources:
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref SlimListSecurityGroup
-        SubnetIds:
-          - !Ref SlimListSubnetOne
-          - !Ref SlimListSubnetTwo
-          - !Ref SlimListSubnetThree
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
@@ -478,13 +441,6 @@ Resources:
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref SlimListSecurityGroup
-        SubnetIds:
-          - !Ref SlimListSubnetOne
-          - !Ref SlimListSubnetTwo
-          - !Ref SlimListSubnetThree
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
