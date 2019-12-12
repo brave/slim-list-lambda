@@ -52,6 +52,7 @@ const write = async (bucket, key, bufferOrString) => {
     Bucket: bucket,
     Key: key,
     Body: bufferOrString
+    ACL: 'bucket-owner-full-control' 
   }
 
   await globalS3.putObject(s3Query).promise()
