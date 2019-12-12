@@ -8,20 +8,20 @@ Description: "SAM Template to create and deploy Slim List Lambdas
 Parameters:
   TracingFlag:
     Description: "Flag to enable AWS X-Ray tracing (set to Active)
-      for debugging. Default setting is PassThrough."
+      for debugging. Default setting is Active."
     AllowedValues:
       - PassThrough
       - Active
     Type: String
     Default: Active
   DebugFlag:
-    Description: "Flag to enable debugging. Default setting is 0."
+    Description: "Flag to enable debugging. Default setting is 1."
     Type: Number
     Default: 1
   VerboseFlag:
     Description: "Flag to defined verbosity. Default setting is 0."
     Type: Number
-    Default: 1
+    Default: 0
   SlimListBuildLambdaExecutionRole:
     Description: "IAM Role for Slim List Build Lambda"
     Type: "AWS::SSM::Parameter::Value<String>"
