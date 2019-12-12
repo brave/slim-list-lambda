@@ -51,7 +51,7 @@ const write = async (bucket, key, bufferOrString) => {
   const s3Query = {
     Bucket: bucket,
     Key: key,
-    Body: bufferOrString
+    Body: bufferOrString,
     ACL: 'bucket-owner-full-control' 
   }
 
