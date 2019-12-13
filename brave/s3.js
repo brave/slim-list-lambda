@@ -46,7 +46,7 @@ const read = async (bucket, key) => {
   return result.Body
 }
 
-const write = async (bucket, key, bufferOrString, read_acl='uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"', full_control_acl='id=34065bfa1a32c7d309989555389b65d767395d28eef7710f779c9d8d72147df4') => {
+const write = async (bucket, key, bufferOrString, read_acl='uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"', full_control_acl='') => {
   debugLib.verbose(`Writing to S3: s3://${bucket}/${key}`)
   const s3Query = {
     Bucket: bucket,
