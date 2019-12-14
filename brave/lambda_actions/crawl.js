@@ -124,11 +124,11 @@ const validateArgs = async inputArgs => {
       default: [0]
     },
     readAcl: {
-      validate: isString,
+      validate: stringCheck,
       default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
     },
     bucketOwner: {
-      validate: isString,
+      validate: stringCheck,
       default: 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
     }
   }
