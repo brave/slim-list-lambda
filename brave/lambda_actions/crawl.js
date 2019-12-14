@@ -296,7 +296,7 @@ const _crawlPage = async (page, args) => {
   crawlData.breath = args.currentBreath
   crawlData.depth = args.currentDepth
   crawlData.timestamp = (new Date()).toISOString()
-  await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData) args.readAcl, args.bucketOwner)
+  await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData), args.readAcl, args.bucketOwner)
 
   const sqsMessage = Object.create(null)
   sqsMessage.batch = args.batch
