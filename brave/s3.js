@@ -5,13 +5,14 @@
  * Common functions for reading and writing data to S3.
  */
 
-const awsSdkLib = require('aws-sdk')
+const AWSXRay = require('aws-xray-sdk-core');
+const awsSdkLib = AWSXRay.captureAWS(require('aws-sdk'));
 
 const debugLib = require('./debug')
 
 const globalS3 = new awsSdkLib.S3({
   apiVersion: '2006-03-01',
-  region: 'us-east-1'
+  region: 'us-west-2'
 })
 
 const list = async (bucket, prefix) => {
@@ -45,15 +46,18 @@ const read = async (bucket, key) => {
   return result.Body
 }
 
-const write = async (bucket, key, bufferOrString) => {
+const write = async (bucket, key, bufferOrString, read_acl, full_control_acl) => {
   debugLib.verbose(`Writing to S3: s3://${bucket}/${key}`)
   const s3Query = {
     Bucket: bucket,
     Key: key,
-    Body: bufferOrString
+    Body: bufferOrString,
+    GrantRead: read_acl, 
+    GrantFullControl: full_control_acl 
   }
 
   await globalS3.putObject(s3Query).promise()
+
   debugLib.verbose(`Wrote file to s3://${bucket}/${key}`)
   return true
 }

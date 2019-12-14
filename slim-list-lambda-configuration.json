@@ -1,0 +1,7 @@
+{
+  "Parameters" : {
+    "TracingFlag" : "Active",
+    "DebugFlag": 1,
+    "VerboseFlag": 0
+  }
+}

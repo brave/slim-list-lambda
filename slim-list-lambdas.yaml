@@ -1,0 +1,549 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: "SAM Template to create and deploy Slim List Lambdas
+  which will be used with SQS Queues, and Aurora Postgres where processed
+  results will be stored in S3."
+
+Parameters:
+  TracingFlag:
+    Description: "Flag to enable AWS X-Ray tracing (set to Active)
+      for debugging. Default setting is Active."
+    AllowedValues:
+      - PassThrough
+      - Active
+    Type: String
+    Default: Active
+  DebugFlag:
+    Description: "Flag to enable debugging. Default setting is 1."
+    Type: Number
+    Default: 1
+  VerboseFlag:
+    Description: "Flag to defined verbosity. Default setting is 0."
+    Type: Number
+    Default: 0
+  SlimListBuildLambdaExecutionRole:
+    Description: "IAM Role for Slim List Build Lambda"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SlimList/Lambda/\
+      BuildLambdaExecutionRoleArn"
+  SlimListCrawlDispatchLambdaExecutionRole:
+    Description: "IAM Role for Slim List Crawl Dispatch Lambda"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SlimList/Lambda/\
+      CrawlDispatchLambdaExecutionRoleArn"
+  SlimListCrawlLambdaExecutionRole:
+    Description: "IAM Role for Slim List Crawl Lambda"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SlimList/Lambda/\
+      CrawlLambdaExecutionRoleArn"
+  SlimListRecordLambdaExecutionRole:
+    Description: "IAM Role for Slim List Record Lambda"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SlimList/Lambda/\
+      RecordLambdaExecutionRoleArn"
+  DatabaseHostName:
+    Description: "Slim List Aurora Cluster Database Endpoint"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/Databases/Aurora/\
+      SlimList/DBEndpoint"
+  DatabaseUserName:
+    Description: "Slim List Aurora Cluster Database Admin User"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/Databases/Aurora/\
+      SlimList/Auth/AdminUserName"
+  DatabasePort:
+    Description: "Aurora Database Port"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/Databases/Aurora/\
+      SlimList/DBPort"
+  DeploymentEnvironment:
+    Description: "Slimi List Deployment Environment"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SlimList/DeploymentEnvironment"
+  SlimListCrawlDLQ:
+    Description: "Slim List Crawl Lambda DLQ"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SQS/CrawlQueue"
+  SlimListCrawlDispatchDLQ:
+    Description: "Slim List Crawl Dispatch Lambda DLQ"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SQS/CrawlDispatchQueue"
+  SlimListRecordDLQ:
+    Description: "Slim List Record Lambda DLQ"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SQS/RecordQueue"
+  SlimListBuildDLQ:
+    Description: "Slim List Build Lambda DLQ"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SQS/BuildQueue"
+
+Resources:
+  SlimListCrawlDispatchLambda:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Description: "Lambda function that is triggered
+        by a CloudWatch Event cron to gather adblock lists."
+      Handler: "index.dispatch"
+      Runtime: nodejs8.10
+      CodeUri: ./build/slim-list-generator.zip
+      Timeout: 600
+      MemorySize: 2048
+      Environment:
+        Variables:
+          DEBUG: !Ref DebugFlag
+          PG_USERNAME: !Ref DatabaseUserName
+          PG_HOSTNAME: !Ref DatabaseHostName
+          PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
+          PG_PORT: !Ref DatabasePort
+          VERBOSE: !Ref VerboseFlag
+      Tracing: !Ref TracingFlag
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !Ref SlimListCrawlDispatchDLQ
+      Role: !Ref SlimListCrawlDispatchLambdaExecutionRole
+      AutoPublishAlias: !Ref DeploymentEnvironment
+      DeploymentPreference:
+        Type: AllAtOnce
+        Alarms:
+          - !Ref AliasCrawlDispatchErrorMetricGreaterThanZeroAlarm
+          - !Ref LatestCrawlDispatchVersionErrorMetricGreaterThanZeroAlarm
+      Tags:
+        Name: slim-list-lambda-crawl-dispatch
+        ApplicationID: slim-list
+        ResourceName: slim-list-lambda-crawl-dispatch
+        Security: private
+        Owner: brave-core
+        Environment: !Ref DeploymentEnvironment
+        BusinessUnit: brave-core
+        Project: "https://github.com/brave/devops/projects/29"
+        RequestID: "https://github.com/brave/devops/issues/2112"
+
+  SlimListCrawlDispatchLambdaLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DependsOn: SlimListCrawlDispatchLambda
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ''
+          - - '/aws/lambda/'
+            - !Ref SlimListCrawlDispatchLambda
+      RetentionInDays: 7
+
+  AliasCrawlDispatchErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlDispatchLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlDispatchLambda
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  LatestCrawlDispatchVersionErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlDispatchLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlDispatchLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListCrawlDispatchLambda.Version.Version
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  SsmCrawlDispatchLambdaArn:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/DeploymentConfig/SlimList/Resources/\
+        Lambda/CrawlDispatch/LambdaArn"
+      Type: "String"
+      Value:
+        Fn::GetAtt:
+          - SlimListCrawlDispatchLambda
+          - Arn
+      Description: "Resource ARN for Crawl Dispatch Lambda for Slim List"
+      Tags:
+        Name: ssm-slim-list-lambda-crawl-dispatch
+        ApplicationID: slim-list
+        ResourceName: slim-list-lambda-crawl-dispatch
+        Security: private
+        Owner: brave-core
+        Environment: !Ref DeploymentEnvironment
+        BusinessUnit: brave-core
+        Project: "https://github.com/brave/devops/projects/29"
+        RequestID: "https://github.com/brave/devops/issues/2112"
+
+  SlimListCrawlLambda:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Description: "Lambda function that processes information
+        sent through brave-slim-list SQS queue."
+      Handler: "index.dispatch"
+      Runtime: nodejs8.10
+      CodeUri: ./build/slim-list-generator.zip
+      Timeout: 600
+      MemorySize: 2048
+      Environment:
+        Variables:
+          DEBUG: !Ref DebugFlag
+          PG_USERNAME: !Ref DatabaseUserName
+          PG_HOSTNAME: !Ref DatabaseHostName
+          PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
+          PG_PORT: !Ref DatabasePort
+          VERBOSE: !Ref VerboseFlag
+      Tracing: !Ref TracingFlag
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !Ref SlimListCrawlDLQ
+      Role: !Ref SlimListCrawlLambdaExecutionRole
+      AutoPublishAlias: !Ref DeploymentEnvironment
+      DeploymentPreference:
+        Type: AllAtOnce
+        Alarms:
+          - !Ref AliasCrawlErrorMetricGreaterThanZeroAlarm
+          - !Ref LatestCrawlVersionErrorMetricGreaterThanZeroAlarm
+      Tags:
+        Name: slim-list-lambda-crawl
+        ApplicationID: slim-list
+        ResourceName: slim-list-lambda-crawl
+        Security: private
+        Owner: brave-core
+        Environment: !Ref DeploymentEnvironment
+        BusinessUnit: brave-core
+        Project: "https://github.com/brave/devops/projects/29"
+        RequestID: "https://github.com/brave/devops/issues/2112"
+
+  SlimListCrawlLambdaLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DependsOn: SlimListCrawlLambda
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ''
+          - - '/aws/lambda/'
+            - !Ref SlimListCrawlLambda
+      RetentionInDays: 7
+
+  AliasCrawlErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlLambda
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  LatestCrawlVersionErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListCrawlLambda.Version.Version
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  SsmCrawlLambdaArn:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/DeploymentConfig/SlimList/Resources/\
+        Lambda/Crawl/LambdaArn"
+      Type: "String"
+      Value:
+        Fn::GetAtt:
+          - SlimListCrawlLambda
+          - Arn
+      Description: "Resource ARN for Crawl Lambda for Slim List"
+      Tags:
+        Name: ssm-slim-list-lambda-crawl
+        ApplicationID: slim-list
+        ResourceName: slim-list-lambda-crawl
+        Security: private
+        Owner: brave-core
+        Environment: !Ref DeploymentEnvironment
+        BusinessUnit: brave-core
+        Project: "https://github.com/brave/devops/projects/29"
+        RequestID: "https://github.com/brave/devops/issues/2112"
+
+  SlimListRecordLambda:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Description: "Lambda function that processes messages
+        from the SQS queue brave-slim-list-record"
+      Handler: "index.dispatch"
+      Runtime: nodejs8.10
+      CodeUri: ./build/slim-list-generator.zip
+      Timeout: 600
+      MemorySize: 2048
+      Environment:
+        Variables:
+          DEBUG: !Ref DebugFlag
+          PG_USERNAME: !Ref DatabaseUserName
+          PG_HOSTNAME: !Ref DatabaseHostName
+          PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
+          PG_PORT: !Ref DatabasePort
+          VERBOSE: !Ref VerboseFlag
+      Tracing: !Ref TracingFlag
+      ReservedConcurrentExecutions: 30
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !Ref SlimListRecordDLQ
+      Role: !Ref SlimListRecordLambdaExecutionRole
+      AutoPublishAlias: !Ref DeploymentEnvironment
+      DeploymentPreference:
+        Type: AllAtOnce
+        Alarms:
+          - !Ref AliasRecordErrorMetricGreaterThanZeroAlarm
+          - !Ref LatestRecordVersionErrorMetricGreaterThanZeroAlarm
+      Tags:
+        Name: slim-list-lambda-record
+        ApplicationID: slim-list
+        ResourceName: slim-list-lambda-record
+        Security: private
+        Owner: brave-core
+        Environment: !Ref DeploymentEnvironment
+        BusinessUnit: brave-core
+        Project: "https://github.com/brave/devops/projects/29"
+        RequestID: "https://github.com/brave/devops/issues/2112"
+
+  SlimListRecordLambdaLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DependsOn: SlimListRecordLambda
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ''
+          - - '/aws/lambda/'
+            - !Ref SlimListRecordLambda
+      RetentionInDays: 7
+
+  AliasRecordErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListRecordLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListRecordLambda
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  LatestRecordVersionErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListRecordLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListRecordLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListRecordLambda.Version.Version
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  SsmRecordLambdaArn:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/DeploymentConfig/SlimList/Resources/\
+        Lambda/Record/LambdaArn"
+      Type: "String"
+      Value:
+        Fn::GetAtt:
+          - SlimListRecordLambda
+          - Arn
+      Description: "Resource ARN for Record Lambda for Slim List"
+      Tags:
+        Name: ssm-slim-list-lambda-record
+        ApplicationID: slim-list
+        ResourceName: slim-list-lambda-record
+        Security: private
+        Owner: brave-core
+        Environment: !Ref DeploymentEnvironment
+        BusinessUnit: brave-core
+        Project: "https://github.com/brave/devops/projects/29"
+        RequestID: "https://github.com/brave/devops/issues/2112"
+
+  SlimListBuildLambda:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Description: "Lambda function that stores slimmed down adblock
+        list in publicly readable S3 bucket"
+      Handler: "index.dispatch"
+      Runtime: nodejs8.10
+      CodeUri: ./build/slim-list-generator.zip
+      Timeout: 600
+      MemorySize: 2048
+      Environment:
+        Variables:
+          DEBUG: !Ref DebugFlag
+          PG_USERNAME: !Ref DatabaseUserName
+          PG_HOSTNAME: !Ref DatabaseHostName
+          PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
+          PG_PORT: !Ref DatabasePort
+          VERBOSE: !Ref VerboseFlag
+      Tracing: !Ref TracingFlag
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !Ref SlimListBuildDLQ
+      Role: !Ref SlimListBuildLambdaExecutionRole
+      AutoPublishAlias: !Ref DeploymentEnvironment
+      DeploymentPreference:
+        Type: AllAtOnce
+        Alarms:
+          - !Ref AliasBuildErrorMetricGreaterThanZeroAlarm
+          - !Ref LatestBuildVersionErrorMetricGreaterThanZeroAlarm
+      Tags:
+        Name: slim-list-lambda-build
+        ApplicationID: slim-list
+        ResourceName: slim-list-lambda-build
+        Security: private
+        Owner: brave-core
+        Environment: !Ref DeploymentEnvironment
+        BusinessUnit: brave-core
+        Project: "https://github.com/brave/devops/projects/29"
+        RequestID: "https://github.com/brave/devops/issues/2112"
+
+  SlimListBuildLambdaLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DependsOn: SlimListBuildLambda
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ''
+          - - '/aws/lambda/'
+            - !Ref SlimListBuildLambda
+      RetentionInDays: 7
+
+  AliasBuildErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListBuildLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListBuildLambda
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  LatestBuildVersionErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListBuildLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListBuildLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListBuildLambda.Version.Version
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  SsmBuildLambdaArn:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/DeploymentConfig/SlimList/Resources/\
+        Lambda/Build/LambdaArn"
+      Type: "String"
+      Value:
+        Fn::GetAtt:
+          - SlimListBuildLambda
+          - Arn
+      Description: "Resource ARN for Build Lambda for Slim List"
+      Tags:
+        Name: ssm-slim-list-lambda-build
+        ApplicationID: slim-list
+        ResourceName: slim-list-lambda-build
+        Security: private
+        Owner: brave-core
+        Environment: !Ref DeploymentEnvironment
+        BusinessUnit: brave-core
+        Project: "https://github.com/brave/devops/projects/29"
+        RequestID: "https://github.com/brave/devops/issues/2112"

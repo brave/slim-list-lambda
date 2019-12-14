@@ -5,7 +5,8 @@
  * Common functions for writing messages to AWS SQS.
  */
 
-const awsSdkLib = require('aws-sdk')
+const AWSXRay = require('aws-xray-sdk-core');
+const awsSdkLib = AWSXRay.captureAWS(require('aws-sdk'));
 
 const debugLib = require('./debug')
 

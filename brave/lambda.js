@@ -3,8 +3,10 @@
 const fsLib = require('fs-extra')
 const utilLib = require('util')
 
-const awsSdkLib = require('aws-sdk')
-const fkillLib = require('fkill')
+
+const AWSXRay = require('aws-xray-sdk');
+const awsSdkLib = AWSXRay.captureAWS(require('aws-sdk'));
+// const fkillLib = require('fkill')
 const globLib = require('glob')
 
 const braveResourcesLib = require('./resources')
@@ -21,22 +23,23 @@ const possibleTempDirs = [
   '/tmp/cache-dir'
 ]
 
-const possibleProcNames = [
-  'chromium',
-  'headless-chromium'
-]
+// const possibleProcNames = [
+//   'chromium',
+//   'headless-chromium'
+// ]
+
+const killZombies = async _ => {
+  debugLib.verbose('Killing zombie chromiums...')
+  // for (const procName of possibleProcNames) {
+  //   await fkillLib(procName, {
+  //     force: true,
+  //     ignoreCase: true,
+  //     silent: true
+  //   })
+  // }
+}
 
 const cleanEnv = async _ => {
-  debugLib.verbose('Killing zombie chromiums...')
-
-  for (const procName of possibleProcNames) {
-    await fkillLib(procName, {
-      force: true,
-      ignoreCase: true,
-      silent: true
-    })
-  }
-
   debugLib.verbose('Cleaning up...')
   const cleanedDirs = []
   for (const tempPath of possibleTempDirs) {
@@ -91,5 +94,6 @@ const invokeWithResponse = async (lambdaName, args) => {
 module.exports = {
   cleanEnv,
   invoke,
-  invokeWithResponse
+  invokeWithResponse,
+  killZombies
 }
