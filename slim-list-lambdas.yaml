@@ -42,6 +42,10 @@ Parameters:
     Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/DeploymentConfig/SlimList/Lambda/\
       RecordLambdaExecutionRoleArn"
+  SlimListLambdaSNSArn:
+    Description: "Slim List Chatbot SNS Arn"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SlimList/Resources/Lambda/SnsArn"
   DatabaseHostName:
     Description: "Slim List Aurora Cluster Database Endpoint"
     Type: "AWS::SSM::Parameter::Value<String>"
@@ -134,6 +138,8 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       AlarmDescription: Lambda Function Error > 0
+      AlarmActions: 
+        - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -155,6 +161,8 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       AlarmDescription: Lambda Function Error > 0
+      AlarmActions: 
+        - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -438,7 +446,9 @@ Resources:
         list in publicly readable S3 bucket"
       Handler: "index.dispatch"
       Runtime: nodejs8.10
-      CodeUri: ./build/slim-list-generator.zip
+      Code:
+        S3Bucket: slim-list-lambda-20191113184801583700000001
+        S3Key: b6bb9ffbd3554d84d613f946c71ef490
       Timeout: 600
       MemorySize: 2048
       Environment:
@@ -481,6 +491,33 @@ Resources:
           - - '/aws/lambda/'
             - !Ref SlimListBuildLambda
       RetentionInDays: 7
+
+  SlimListBuildLambdaMetricFilter: 
+    Type: AWS::Logs::MetricFilter
+    DependsOn: SlimListBuildLambdaLogGroup
+    Properties: 
+      LogGroupName: 
+        !Ref SlimListBuildLambdaLogGroup
+      FilterPattern: "Found 0 recently used exception rules"
+      MetricTransformations: 
+        - 
+          MetricValue: "1"
+          MetricNamespace: "SlimListBuildLambda/MetricFilter"
+          MetricName: "SlimListBuildLambdaMetricFilter"
+
+  BuildLambdaErrorMetricFilterGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    DependsOn: SlimListBuildLambdaMetricFilter
+    Properties:
+      AlarmDescription: Found 0 recently used exception rules
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 2
+      MetricName: SlimListBuildLambdaMetricFilter
+      Namespace: SlimListBuildLambda/MetricFilter
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
 
   AliasBuildErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
