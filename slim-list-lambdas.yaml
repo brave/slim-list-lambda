@@ -152,6 +152,8 @@ Resources:
       EvaluationPeriods: 2
       MetricName: Errors
       Namespace: AWS/Lambda
+      OKActions:
+        - !Ref SlimListLambdaSNSArn
       Period: 60
       Statistic: Sum
       TreatMissingData: notBreaching
