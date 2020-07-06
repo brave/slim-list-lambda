@@ -446,9 +446,7 @@ Resources:
         list in publicly readable S3 bucket"
       Handler: "index.dispatch"
       Runtime: nodejs8.10
-      Code:
-        S3Bucket: slim-list-lambda-20191113184801583700000001
-        S3Key: b6bb9ffbd3554d84d613f946c71ef490
+      CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
       Environment:
