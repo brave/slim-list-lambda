@@ -508,6 +508,8 @@ Resources:
     DependsOn: SlimListBuildLambdaMetricFilter
     Properties:
       AlarmDescription: Found 0 recently used exception rules
+      AlarmActions: 
+        - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
       EvaluationPeriods: 2
       MetricName: SlimListBuildLambdaMetricFilter
