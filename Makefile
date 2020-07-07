@@ -3,7 +3,7 @@ SHELL := /bin/bash
 TMP_WORKSPACE := build
 TMP_RESOURCES := $(TMP_WORKSPACE)/resources
 
-DOCKER_IMAGE := lambci/lambda:nodejs8.10
+DOCKER_IMAGE := lambci/lambda:nodejs12.x
 
 FUNCTION_NAME=slim-list-generator
 FUNCTION_S3_BUCKET=abp-lambda-funcs20181113170947211800000001
@@ -16,7 +16,7 @@ install:
 	npm install
 
 install-lambda:
-	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs8.10 ./build.sh
+	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs12.x ./build.sh
 
 lite-build:
 	cp -r brave index.js $(TMP_WORKSPACE)
