@@ -138,7 +138,7 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       AlarmDescription: Lambda Function Error > 0
-      AlarmActions: 
+      AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
@@ -163,7 +163,7 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       AlarmDescription: Lambda Function Error > 0
-      AlarmActions: 
+      AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
@@ -179,6 +179,8 @@ Resources:
       EvaluationPeriods: 2
       MetricName: Errors
       Namespace: AWS/Lambda
+      OKActions:
+        - !Ref SlimListLambdaSNSArn
       Period: 60
       Statistic: Sum
       TreatMissingData: notBreaching
@@ -492,15 +494,15 @@ Resources:
             - !Ref SlimListBuildLambda
       RetentionInDays: 7
 
-  SlimListBuildLambdaMetricFilter: 
+  SlimListBuildLambdaMetricFilter:
     Type: AWS::Logs::MetricFilter
     DependsOn: SlimListBuildLambdaLogGroup
-    Properties: 
-      LogGroupName: 
+    Properties:
+      LogGroupName:
         !Ref SlimListBuildLambdaLogGroup
       FilterPattern: "Found 0 recently used exception rules"
-      MetricTransformations: 
-        - 
+      MetricTransformations:
+        -
           MetricValue: "1"
           MetricNamespace: "SlimListBuildLambda/MetricFilter"
           MetricName: "SlimListBuildLambdaMetricFilter"
@@ -510,12 +512,14 @@ Resources:
     DependsOn: SlimListBuildLambdaMetricFilter
     Properties:
       AlarmDescription: Found 0 recently used exception rules
-      AlarmActions: 
+      AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
       EvaluationPeriods: 2
       MetricName: SlimListBuildLambdaMetricFilter
       Namespace: SlimListBuildLambda/MetricFilter
+      OKActions:
+        - !Ref SlimListLambdaSNSArn
       Period: 60
       Statistic: Sum
       TreatMissingData: notBreaching
