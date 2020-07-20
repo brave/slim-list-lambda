@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/brave-experiments/slim-list-lambda#readme",
   "dependencies": {
-    "adblock-rs": "^0.2.11",
+    "adblock-rs": "^ 0.3.0",
     "aws-sdk": "^2.574.0",
     "aws-xray-sdk": "^2.5.0",
     "chrome-aws-lambda": "^1.20.0",

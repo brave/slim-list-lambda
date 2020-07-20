@@ -11,18 +11,20 @@ const braveDebugLib = require('./debug')
 
 const serializeRules = rules => {
   braveDebugLib.verbose(`Serializing ${rules.length} rules`)
+  const filterSet = new adblockRsLib.FilterSet(true)
+  filterSet.addFilters(rules, adblockRsLib.FilterFormat.STANDARD)
   const adBlockArgs = {
-    debug: true,
     optimize: false
   }
-  const adBlockDat = (new adblockRsLib.Engine(rules, adBlockArgs)).serialize()
+  const adBlockClient = new adblockRsLib.Engine(filterSet, adBlockArgs)
+  const adBlockDat = adBlockClient.serialize()
   const adBlockDatBuffer = Buffer.from(adBlockDat)
   braveDebugLib.verbose(`Successfully serialized rules into buffer of length ${adBlockDatBuffer.byteLength}`)
   return adBlockDatBuffer
 }
 
 const createClient = adblockDatBuffer => {
-  const adblockClient = new adblockRsLib.Engine([], true)
+  const adblockClient = new adblockRsLib.Engine(true)
   adblockClient.deserialize(new Uint8Array(adblockDatBuffer).buffer)
   return adblockClient
 }
