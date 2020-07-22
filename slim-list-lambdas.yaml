@@ -21,7 +21,7 @@ Parameters:
   VerboseFlag:
     Description: "Flag to defined verbosity. Default setting is 0."
     Type: Number
-    Default: 0
+    Default: 1
   SlimListBuildLambdaExecutionRole:
     Description: "IAM Role for Slim List Build Lambda"
     Type: "AWS::SSM::Parameter::Value<String>"
