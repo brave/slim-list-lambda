@@ -451,7 +451,7 @@ Resources:
       Handler: "index.dispatch"
       Runtime: nodejs12.x
       CodeUri: ./build/slim-list-generator.zip
-      Timeout: 600
+      Timeout: 900
       MemorySize: 2048
       Environment:
         Variables:
