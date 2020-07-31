@@ -88,7 +88,16 @@ const start = async args => {
 
   const maxBlockingRules = maxRules - numExceptionRules
   const blockingRules = await braveDbLib.popularBlockingRules(dbClient, earliestBatchToConsider, maxBlockingRules)
-  braveDebugLib.log(`Found ${blockingRules.length} recently used exception rules`)
+  const numBlockingRules = blockingRules.length
+  braveDebugLib.log(`Found ${numBlockingRules} recently used blocking rules`)
+
+  if (numExceptionRules === 0 || numBlockingRules === 0) {
+    const errMsg = 'Looks like something is wrong with the db or crawl: ' +
+                   `got ${numExceptionRules} exception rules and ` +
+                   `${numBlockingRules} blocking rules.  We should never ` +
+                   'have zero of either.'
+    throw Error(errMsg)
+  }
 
   const combinedRules = exceptionRules.concat(blockingRules)
 
