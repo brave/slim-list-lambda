@@ -517,7 +517,7 @@ Resources:
       TreatMissingData: notBreaching
       Threshold: 0
 
-  AliasRecordInvocationMetricAlarm:
+  AliasRecordWeeklyInvocationMetricAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       AlarmDescription: Lambda Function Invocations < 1
@@ -538,7 +538,7 @@ Resources:
       TreatMissingData: breaching
       Threshold: 1
 
-  LatestRecordVersionInvocationMetricAlarm:
+  LatestRecordVersionWeeklyInvocationMetricAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       AlarmDescription: Lambda Function Invocations < 1
@@ -709,7 +709,7 @@ Resources:
       TreatMissingData: notBreaching
       Threshold: 0
 
-  AliasBuildInvocationMetricAlarm:
+  AliasBuildWeeklyInvocationMetricAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       AlarmDescription: Lambda Function Invocations < 1
@@ -730,7 +730,7 @@ Resources:
       TreatMissingData: breaching
       Threshold: 1
 
-  LatestBuildVersionInvocationMetricAlarm:
+  LatestBuildVersionWeeklyInvocationMetricAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       AlarmDescription: Lambda Function Invocations < 1
