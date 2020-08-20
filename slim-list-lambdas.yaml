@@ -186,6 +186,58 @@ Resources:
       TreatMissingData: notBreaching
       Threshold: 0
 
+  AliasCrawlDispatchWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Invocations < 1
+      AlarmActions:
+        - !Ref SlimListLambdaSNSArn
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlDispatchLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlDispatchLambda
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      OKActions:
+        - !Ref SlimListLambdaSNSArn
+      Period: 604800
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 1
+
+  LatestCrawlDispatchVersionWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Invocations < 1
+      AlarmActions:
+        - !Ref SlimListLambdaSNSArn
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlDispatchLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlDispatchLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListCrawlDispatchLambda.Version.Version
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      OKActions:
+        - !Ref SlimListLambdaSNSArn
+      Period: 604800
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 1
+
   SsmCrawlDispatchLambdaArn:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -302,6 +354,50 @@ Resources:
       Statistic: Sum
       TreatMissingData: notBreaching
       Threshold: 0
+
+  AliasCrawlWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Invocations < 1
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlLambda
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 604800
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 1
+
+  LatestCrawlVersionWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Invocations < 1
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListCrawlLambda.Version.Version
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 604800
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 1
 
   SsmCrawlLambdaArn:
     Type: "AWS::SSM::Parameter"
@@ -420,6 +516,50 @@ Resources:
       Statistic: Sum
       TreatMissingData: notBreaching
       Threshold: 0
+
+  AliasRecordWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Invocations < 1
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListRecordLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListRecordLambda
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 604800
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 1
+
+  LatestRecordVersionWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Invocations < 1
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListRecordLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListRecordLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListRecordLambda.Version.Version
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 604800
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 1
 
   SsmRecordLambdaArn:
     Type: "AWS::SSM::Parameter"
@@ -568,6 +708,50 @@ Resources:
       Statistic: Sum
       TreatMissingData: notBreaching
       Threshold: 0
+
+  AliasBuildWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Invocations < 1
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListBuildLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListBuildLambda
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 604800
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 1
+
+  LatestBuildVersionWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Invocations < 1
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListBuildLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListBuildLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListBuildLambda.Version.Version
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 604800
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 1
 
   SsmBuildLambdaArn:
     Type: "AWS::SSM::Parameter"
