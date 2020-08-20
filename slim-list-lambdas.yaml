@@ -141,7 +141,7 @@ Resources:
           - ''
           - - '/aws/lambda/'
             - !Ref SlimListCrawlDispatchLambda
-      RetentionInDays: 7
+      RetentionInDays: 14
 
   AliasCrawlDispatchErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
@@ -210,7 +210,7 @@ Resources:
               - !Ref DeploymentEnvironment
         - Name: FunctionName
           Value: !Ref SlimListCrawlDispatchLambda
-      EvaluationPeriods: 7
+      EvaluationPeriods: 1
       MetricName: Invocations
       Namespace: AWS/Lambda
       OKActions:
@@ -218,7 +218,7 @@ Resources:
       Period: 86400
       Statistic: Sum
       TreatMissingData: breaching
-      Threshold: 1
+      Threshold: 7
 
   LatestCrawlDispatchVersionWeeklyInvocationMetricAlarm:
     Type: "AWS::CloudWatch::Alarm"
@@ -237,7 +237,7 @@ Resources:
           Value: !Ref SlimListCrawlDispatchLambda
         - Name: ExecutedVersion
           Value: !GetAtt SlimListCrawlDispatchLambda.Version.Version
-      EvaluationPeriods: 7
+      EvaluationPeriods: 1
       MetricName: Invocations
       Namespace: AWS/Lambda
       OKActions:
@@ -245,7 +245,7 @@ Resources:
       Period: 86400
       Statistic: Sum
       TreatMissingData: breaching
-      Threshold: 1
+      Threshold: 7
 
   SsmCrawlDispatchLambdaArn:
     Type: "AWS::SSM::Parameter"
@@ -318,7 +318,7 @@ Resources:
           - ''
           - - '/aws/lambda/'
             - !Ref SlimListCrawlLambda
-      RetentionInDays: 7
+      RetentionInDays: 14
 
   AliasCrawlErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
@@ -480,7 +480,7 @@ Resources:
           - ''
           - - '/aws/lambda/'
             - !Ref SlimListRecordLambda
-      RetentionInDays: 7
+      RetentionInDays: 14
 
   AliasRecordErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
@@ -641,7 +641,7 @@ Resources:
           - ''
           - - '/aws/lambda/'
             - !Ref SlimListBuildLambda
-      RetentionInDays: 7
+      RetentionInDays: 14
 
   SlimListBuildLambdaMetricFilter:
     Type: AWS::Logs::MetricFilter
@@ -731,13 +731,13 @@ Resources:
               - !Ref DeploymentEnvironment
         - Name: FunctionName
           Value: !Ref SlimListBuildLambda
-      EvaluationPeriods: 7
+      EvaluationPeriods: 1
       MetricName: Invocations
       Namespace: AWS/Lambda
       Period: 86400
       Statistic: Sum
       TreatMissingData: breaching
-      Threshold: 1
+      Threshold: 7
 
   LatestBuildVersionWeeklyInvocationMetricAlarm:
     Type: "AWS::CloudWatch::Alarm"
@@ -754,13 +754,13 @@ Resources:
           Value: !Ref SlimListBuildLambda
         - Name: ExecutedVersion
           Value: !GetAtt SlimListBuildLambda.Version.Version
-      EvaluationPeriods: 7
+      EvaluationPeriods: 1
       MetricName: Invocations
       Namespace: AWS/Lambda
       Period: 86400
       Statistic: Sum
       TreatMissingData: breaching
-      Threshold: 1
+      Threshold: 7
 
   SsmBuildLambdaArn:
     Type: "AWS::SSM::Parameter"
@@ -835,7 +835,7 @@ Resources:
           - ''
           - - '/aws/lambda/'
             - !Ref SlimListAssembleLambda
-      RetentionInDays: 7
+      RetentionInDays: 14
 
   SlimListAssembleLambdaMetricFilter:
     Type: AWS::Logs::MetricFilter
@@ -925,13 +925,13 @@ Resources:
               - !Ref DeploymentEnvironment
         - Name: FunctionName
           Value: !Ref SlimListAssembleLambda
-      EvaluationPeriods: 7
+      EvaluationPeriods: 1
       MetricName: Invocations
       Namespace: AWS/Lambda
       Period: 86400
       Statistic: Sum
       TreatMissingData: breaching
-      Threshold: 1
+      Threshold: 7
 
   LatestAssembleVersionWeeklyInvocationMetricAlarm:
     Type: "AWS::CloudWatch::Alarm"
@@ -948,13 +948,13 @@ Resources:
           Value: !Ref SlimListAssembleLambda
         - Name: ExecutedVersion
           Value: !GetAtt SlimListAssembleLambda.Version.Version
-      EvaluationPeriods: 7
+      EvaluationPeriods: 1
       MetricName: Invocations
       Namespace: AWS/Lambda
       Period: 86400
       Statistic: Sum
       TreatMissingData: breaching
-      Threshold: 1
+      Threshold: 7
 
   SsmAssembleLambdaArn:
     Type: "AWS::SSM::Parameter"
