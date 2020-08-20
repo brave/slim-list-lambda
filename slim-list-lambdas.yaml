@@ -556,7 +556,7 @@ Resources:
       EvaluationPeriods: 1
       MetricName: Invocations
       Namespace: AWS/Lambda
-      Period: 604800
+      Period: 86400
       Statistic: Sum
       TreatMissingData: breaching
       Threshold: 1
@@ -725,7 +725,7 @@ Resources:
       EvaluationPeriods: 1
       MetricName: Invocations
       Namespace: AWS/Lambda
-      Period: 604800
+      Period: 86400
       Statistic: Sum
       TreatMissingData: breaching
       Threshold: 1
