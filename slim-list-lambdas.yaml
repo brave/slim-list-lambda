@@ -210,7 +210,7 @@ Resources:
               - !Ref DeploymentEnvironment
         - Name: FunctionName
           Value: !Ref SlimListCrawlDispatchLambda
-      EvaluationPeriods: 1
+      EvaluationPeriods: 7
       MetricName: Invocations
       Namespace: AWS/Lambda
       OKActions:
@@ -237,7 +237,7 @@ Resources:
           Value: !Ref SlimListCrawlDispatchLambda
         - Name: ExecutedVersion
           Value: !GetAtt SlimListCrawlDispatchLambda.Version.Version
-      EvaluationPeriods: 1
+      EvaluationPeriods: 7
       MetricName: Invocations
       Namespace: AWS/Lambda
       OKActions:
@@ -731,7 +731,7 @@ Resources:
               - !Ref DeploymentEnvironment
         - Name: FunctionName
           Value: !Ref SlimListBuildLambda
-      EvaluationPeriods: 1
+      EvaluationPeriods: 7
       MetricName: Invocations
       Namespace: AWS/Lambda
       Period: 86400
@@ -754,7 +754,7 @@ Resources:
           Value: !Ref SlimListBuildLambda
         - Name: ExecutedVersion
           Value: !GetAtt SlimListBuildLambda.Version.Version
-      EvaluationPeriods: 1
+      EvaluationPeriods: 7
       MetricName: Invocations
       Namespace: AWS/Lambda
       Period: 86400
@@ -925,7 +925,7 @@ Resources:
               - !Ref DeploymentEnvironment
         - Name: FunctionName
           Value: !Ref SlimListAssembleLambda
-      EvaluationPeriods: 1
+      EvaluationPeriods: 7
       MetricName: Invocations
       Namespace: AWS/Lambda
       Period: 86400
@@ -948,7 +948,7 @@ Resources:
           Value: !Ref SlimListAssembleLambda
         - Name: ExecutedVersion
           Value: !GetAtt SlimListAssembleLambda.Version.Version
-      EvaluationPeriods: 1
+      EvaluationPeriods: 7
       MetricName: Invocations
       Namespace: AWS/Lambda
       Period: 86400
