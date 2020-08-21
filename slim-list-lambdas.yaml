@@ -150,7 +150,7 @@ Resources:
   AliasCrawlDispatchErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: 
+      AlarmDescription:
         Fn::Join:
           - ' '
           - - !Ref DeploymentEnvironment
