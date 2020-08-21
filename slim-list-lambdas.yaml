@@ -150,8 +150,12 @@ Resources:
   AliasCrawlDispatchErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Alias Crawl
-        Dispatch Lambda Function Error > 0
+      AlarmDescription: 
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Crawl"
+            - "Dispatch Lambda Function Error > 0"
       AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
@@ -176,8 +180,12 @@ Resources:
   LatestCrawlDispatchVersionErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Latest Crawl
-        Dispatch Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Crawl"
+            - "Dispatch Lambda Function Error > 0"
       AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
@@ -205,8 +213,12 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       ActionsEnabled: !Ref EnableInvocationMetricAlarms
-      AlarmDescription: !Ref DeploymentEnvironment Alias Crawl
-        Dispatch Lambda Function Invocations < 1
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Crawl"
+            - "Dispatch Lambda Function Invocations < 1"
       AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: LessThanThreshold
@@ -232,8 +244,12 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       ActionsEnabled: !Ref EnableInvocationMetricAlarms
-      AlarmDescription: !Ref DeploymentEnvironment Latest Crawl
-        Dispatch Lambda Function Invocations < 1
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Crawl"
+            - "Dispatch Lambda Function Invocations < 1"
       AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: LessThanThreshold
@@ -333,8 +349,12 @@ Resources:
   AliasCrawlErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Alias
-        Crawl Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Crawl"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -355,8 +375,12 @@ Resources:
   LatestCrawlVersionErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Crawl
-        Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Crawl"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -380,8 +404,12 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       ActionsEnabled: !Ref EnableInvocationMetricAlarms
-      AlarmDescription: !Ref DeploymentEnvironment Alias Crawl
-        Lambda Function Invocations < 1
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Crawl"
+            - "Lambda Function Invocations < 1"
       ComparisonOperator: LessThanThreshold
       Dimensions:
         - Name: Resource
@@ -403,8 +431,12 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       ActionsEnabled: !Ref EnableInvocationMetricAlarms
-      AlarmDescription: !Ref DeploymentEnvironment Latest Crawl
-        Lambda Function Invocations < 1
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Crawl"
+            - "Lambda Function Invocations < 1"
       ComparisonOperator: LessThanThreshold
       Dimensions:
         - Name: Resource
@@ -501,8 +533,12 @@ Resources:
   AliasRecordErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Alias
-        Record Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Record"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -523,8 +559,12 @@ Resources:
   LatestRecordVersionErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Latest
-        Record Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Record"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -547,8 +587,12 @@ Resources:
   AliasRecordWeeklyInvocationMetricAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Alias Record
-        Lambda Function Invocations < 1
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Record"
+            - "Lambda Function Invocations < 1"
       ComparisonOperator: LessThanThreshold
       Dimensions:
         - Name: Resource
@@ -569,8 +613,12 @@ Resources:
   LatestRecordVersionWeeklyInvocationMetricAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Latest Lambda
-        Function Invocations < 1
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Record"
+            - "Lambda Function Invocations < 1"
       ComparisonOperator: LessThanThreshold
       Dimensions:
         - Name: Resource
@@ -680,8 +728,12 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     DependsOn: SlimListBuildLambdaMetricFilter
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Build Lambda
-        Found 0 recently used exception rules
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Build Lambda"
+            - "Found 0 recently used exception rules"
       AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
@@ -698,8 +750,12 @@ Resources:
   AliasBuildErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Alias Build
-        Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Build"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -720,8 +776,12 @@ Resources:
   LatestBuildVersionErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Latest
-        Build Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Build"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -745,8 +805,12 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       ActionsEnabled: !Ref EnableInvocationMetricAlarms
-      AlarmDescription: !Ref DeploymentEnvironment Alias
-        Build Lambda Function Invocations < 1
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Build"
+            - "Lambda Function Invocations < 1"
       ComparisonOperator: LessThanThreshold
       Dimensions:
         - Name: Resource
@@ -768,8 +832,12 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       ActionsEnabled: !Ref EnableInvocationMetricAlarms
-      AlarmDescription: !Ref DeploymentEnvironment Lastest Build
-        Lambda Function Invocations < 1
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Build"
+            - "Lambda Function Invocations < 1"
       ComparisonOperator: LessThanThreshold
       Dimensions:
         - Name: Resource
@@ -881,8 +949,12 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     DependsOn: SlimListAssembleLambdaMetricFilter
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Assemble Lambda
-        Found 0 recently used exception rules
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Assemble Lambda"
+            - "Found 0 recently used exception rules"
       AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
@@ -899,8 +971,12 @@ Resources:
   AliasAssembleErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Alias Assemble
-        Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Aseemble"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -921,8 +997,12 @@ Resources:
   LatestAssembleVersionErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: !Ref DeploymentEnvironment Latest Assemble
-        Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Assemble"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -946,8 +1026,12 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       ActionsEnabled: !Ref EnableInvocationMetricAlarms
-      AlarmDescription: !Ref DeploymentEnvironment Alias Assemble
-        Lambda Function Invocations < 1
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Assemble"
+            - "Lambda Function Invocations < 1"
       ComparisonOperator: LessThanThreshold
       Dimensions:
         - Name: Resource
@@ -969,8 +1053,12 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       ActionsEnabled: !Ref EnableInvocationMetricAlarms
-      AlarmDescription: !Ref DeploymentEnvironment Latest
-        Assemble Lambda Function Invocations < 1
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Assemble"
+            - "Lambda Function Invocations < 1"
       ComparisonOperator: LessThanThreshold
       Dimensions:
         - Name: Resource
