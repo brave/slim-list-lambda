@@ -764,7 +764,7 @@ Resources:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
       EvaluationPeriods: 1
-      MetricName: SlimListBuildLambdaMetricFilter
+      MetricName: SlimListBuildLambdaTaskTimedOutMetricFilter
       Namespace: SlimListBuildLambda/MetricFilter
       Period: 60
       Statistic: Sum
