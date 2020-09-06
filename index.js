@@ -27,6 +27,7 @@ const dispatch = async lambdaEvent => {
       case 'crawl':
       case 'record':
       case 'build':
+      case 'assemble':
         lambdaModule = require(`./brave/lambda_actions/${lambdaEvent.action}`)
         break
 

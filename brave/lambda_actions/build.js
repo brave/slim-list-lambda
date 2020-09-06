@@ -88,16 +88,25 @@ const start = async args => {
 
   const maxBlockingRules = maxRules - numExceptionRules
   const blockingRules = await braveDbLib.popularBlockingRules(dbClient, earliestBatchToConsider, maxBlockingRules)
-  braveDebugLib.log(`Found ${blockingRules.length} recently used exception rules`)
+  const numBlockingRules = blockingRules.length
+  braveDebugLib.log(`Found ${numBlockingRules} recently used blocking rules`)
+
+  if (numExceptionRules === 0 || numBlockingRules === 0) {
+    const errMsg = 'Looks like something is wrong with the db or crawl: ' +
+                   `got ${numExceptionRules} exception rules and ` +
+                   `${numBlockingRules} blocking rules.  We should never ` +
+                   'have zero of either.'
+    throw Error(errMsg)
+  }
 
   const combinedRules = exceptionRules.concat(blockingRules)
 
   braveDebugLib.log(`Saving slim-list with ${combinedRules.length} rules`)
   const rulesJSON = JSON.stringify(combinedRules)
 
-  const read_acl = 'uri="http://acs.amazonaws.com/groups/global/AllUsers"'
-  await braveS3Lib.write(args.s3Bucket, args.s3Key, rulesJSON, read_acl, args.bucketOwner)
-  await braveS3Lib.write(args.s3Bucket, 'slim-list/latest.json', rulesJSON, read_acl, args.bucketOwner)
+  const readAcl = 'uri="http://acs.amazonaws.com/groups/global/AllUsers"'
+  await braveS3Lib.write(args.s3Bucket, args.s3Key, rulesJSON, readAcl, args.bucketOwner)
+  await braveS3Lib.write(args.s3Bucket, 'slim-list/latest.json', rulesJSON, readAcl, args.bucketOwner)
 }
 
 module.exports = {

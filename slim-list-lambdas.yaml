@@ -22,6 +22,15 @@ Parameters:
     Description: "Flag to defined verbosity. Default setting is 0."
     Type: Number
     Default: 0
+  EnableInvocationMetricAlarms:
+    Description: "Flag to Enable/Disable Invocation Metric Alarms"
+    Type: String
+    Default: false
+  SlimListAssembleLambdaExecutionRole:
+    Description: "IAM Role for Slim List Assemble Lambda"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SlimList/Lambda/\
+      AssembleLambdaExecutionRoleArn"
   SlimListBuildLambdaExecutionRole:
     Description: "IAM Role for Slim List Build Lambda"
     Type: "AWS::SSM::Parameter::Value<String>"
@@ -81,6 +90,10 @@ Parameters:
     Description: "Slim List Build Lambda DLQ"
     Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/DeploymentConfig/SQS/BuildQueue"
+  SlimListAssembleDLQ:
+    Description: "Slim List Assemble Lambda DLQ"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SQS/AssembleQueue"
 
 Resources:
   SlimListCrawlDispatchLambda:
@@ -132,12 +145,17 @@ Resources:
           - ''
           - - '/aws/lambda/'
             - !Ref SlimListCrawlDispatchLambda
-      RetentionInDays: 7
+      RetentionInDays: 14
 
   AliasCrawlDispatchErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Crawl"
+            - "Dispatch Lambda Function Error > 0"
       AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
@@ -152,8 +170,6 @@ Resources:
       EvaluationPeriods: 2
       MetricName: Errors
       Namespace: AWS/Lambda
-      OKActions:
-        - !Ref SlimListLambdaSNSArn
       Period: 60
       Statistic: Sum
       TreatMissingData: notBreaching
@@ -162,7 +178,12 @@ Resources:
   LatestCrawlDispatchVersionErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Crawl"
+            - "Dispatch Lambda Function Error > 0"
       AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
@@ -179,9 +200,67 @@ Resources:
       EvaluationPeriods: 2
       MetricName: Errors
       Namespace: AWS/Lambda
-      OKActions:
-        - !Ref SlimListLambdaSNSArn
       Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  AliasCrawlDispatchWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: !Ref EnableInvocationMetricAlarms
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Crawl"
+            - "Dispatch Lambda Function Invocations < 1"
+      AlarmActions:
+        - !Ref SlimListLambdaSNSArn
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlDispatchLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlDispatchLambda
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 86400
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 7
+
+  LatestCrawlDispatchVersionWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: !Ref EnableInvocationMetricAlarms
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Crawl"
+            - "Dispatch Lambda Function Invocations < 1"
+      AlarmActions:
+        - !Ref SlimListLambdaSNSArn
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlDispatchLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlDispatchLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListCrawlDispatchLambda.Version.Version
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 86400
       Statistic: Sum
       TreatMissingData: notBreaching
       Threshold: 0
@@ -257,12 +336,17 @@ Resources:
           - ''
           - - '/aws/lambda/'
             - !Ref SlimListCrawlLambda
-      RetentionInDays: 7
+      RetentionInDays: 14
 
   AliasCrawlErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Crawl"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -283,7 +367,12 @@ Resources:
   LatestCrawlVersionErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Crawl"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -302,6 +391,62 @@ Resources:
       Statistic: Sum
       TreatMissingData: notBreaching
       Threshold: 0
+
+  AliasCrawlWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: !Ref EnableInvocationMetricAlarms
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Crawl"
+            - "Lambda Function Invocations < 1"
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlLambda
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 86400
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 7
+
+  LatestCrawlVersionWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: !Ref EnableInvocationMetricAlarms
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Crawl"
+            - "Lambda Function Invocations < 1"
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListCrawlLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListCrawlLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListCrawlLambda.Version.Version
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 86400
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 7
 
   SsmCrawlLambdaArn:
     Type: "AWS::SSM::Parameter"
@@ -375,12 +520,17 @@ Resources:
           - ''
           - - '/aws/lambda/'
             - !Ref SlimListRecordLambda
-      RetentionInDays: 7
+      RetentionInDays: 14
 
   AliasRecordErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Record"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -401,7 +551,12 @@ Resources:
   LatestRecordVersionErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Record"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -420,6 +575,60 @@ Resources:
       Statistic: Sum
       TreatMissingData: notBreaching
       Threshold: 0
+
+  AliasRecordWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Record"
+            - "Lambda Function Invocations < 1"
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListRecordLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListRecordLambda
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 86400
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 1
+
+  LatestRecordVersionWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Record"
+            - "Lambda Function Invocations < 1"
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListRecordLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListRecordLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListRecordLambda.Version.Version
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 86400
+      Statistic: Sum
+      TreatMissingData: breaching
+      Threshold: 1
 
   SsmRecordLambdaArn:
     Type: "AWS::SSM::Parameter"
@@ -492,7 +701,7 @@ Resources:
           - ''
           - - '/aws/lambda/'
             - !Ref SlimListBuildLambda
-      RetentionInDays: 7
+      RetentionInDays: 14
 
   SlimListBuildLambdaMetricFilter:
     Type: AWS::Logs::MetricFilter
@@ -511,15 +720,52 @@ Resources:
     Type: "AWS::CloudWatch::Alarm"
     DependsOn: SlimListBuildLambdaMetricFilter
     Properties:
-      AlarmDescription: Found 0 recently used exception rules
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Build Lambda"
+            - "Found 0 recently used exception rules"
       AlarmActions:
         - !Ref SlimListLambdaSNSArn
       ComparisonOperator: GreaterThanThreshold
       EvaluationPeriods: 2
       MetricName: SlimListBuildLambdaMetricFilter
       Namespace: SlimListBuildLambda/MetricFilter
-      OKActions:
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  SlimListBuildLambdaTimeoutMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    DependsOn: SlimListBuildLambdaLogGroup
+    Properties:
+      LogGroupName:
+        !Ref SlimListBuildLambdaLogGroup
+      FilterPattern: "Task timed out"
+      MetricTransformations:
+        -
+          MetricValue: "1"
+          MetricNamespace: "SlimListBuildLambda/MetricFilter"
+          MetricName: "SlimListBuildLambdaTaskTimedOutMetricFilter"
+
+  BuildLambdaTimeoutErrorMetricFilterGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    DependsOn: SlimListBuildLambdaTimeoutMetricFilter
+    Properties:
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Build Lambda"
+            - "Task timed out"
+      AlarmActions:
         - !Ref SlimListLambdaSNSArn
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 1
+      MetricName: SlimListBuildLambdaTaskTimedOutMetricFilter
+      Namespace: SlimListBuildLambda/MetricFilter
       Period: 60
       Statistic: Sum
       TreatMissingData: notBreaching
@@ -528,7 +774,12 @@ Resources:
   AliasBuildErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Build"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -549,7 +800,12 @@ Resources:
   LatestBuildVersionErrorMetricGreaterThanZeroAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmDescription: Lambda Function Error > 0
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Build"
+            - "Lambda Function Error > 0"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: Resource
@@ -568,6 +824,62 @@ Resources:
       Statistic: Sum
       TreatMissingData: notBreaching
       Threshold: 0
+
+  AliasBuildWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: !Ref EnableInvocationMetricAlarms
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Build"
+            - "Lambda Function Invocations < 1"
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListBuildLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListBuildLambda
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 86400
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 7
+
+  LatestBuildVersionWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: !Ref EnableInvocationMetricAlarms
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Build"
+            - "Lambda Function Invocations < 1"
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListBuildLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListBuildLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListBuildLambda.Version.Version
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 86400
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 7
 
   SsmBuildLambdaArn:
     Type: "AWS::SSM::Parameter"
@@ -590,3 +902,222 @@ Resources:
         BusinessUnit: brave-core
         Project: "https://github.com/brave/devops/projects/29"
         RequestID: "https://github.com/brave/devops/issues/2112"
+
+  SlimListAssembleLambda:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Description: "Lambda function that combines the slim list data
+        with Brave owned/authored lists, and produces an iOS content blocking
+        rule file as well as a corresponding DAT file to be loaded
+        by adblock-rust browser-side."
+      Handler: "index.dispatch"
+      Runtime: nodejs12.x
+      CodeUri: ./build/slim-list-generator.zip
+      Timeout: 900
+      MemorySize: 2048
+      Environment:
+        Variables:
+          DEBUG: !Ref DebugFlag
+          PG_USERNAME: !Ref DatabaseUserName
+          PG_HOSTNAME: !Ref DatabaseHostName
+          PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
+          PG_PORT: !Ref DatabasePort
+          VERBOSE: !Ref VerboseFlag
+      Tracing: !Ref TracingFlag
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !Ref SlimListAssembleDLQ
+      Role: !Ref SlimListAssembleLambdaExecutionRole
+      AutoPublishAlias: !Ref DeploymentEnvironment
+      DeploymentPreference:
+        Type: AllAtOnce
+        Alarms:
+          - !Ref AliasBuildErrorMetricGreaterThanZeroAlarm
+          - !Ref LatestBuildVersionErrorMetricGreaterThanZeroAlarm
+      Tags:
+        Name: slim-list-lambda-assemble
+        ApplicationID: slim-list
+        ResourceName: slim-list-lambda-assemble
+        Security: private
+        Owner: brave-core
+        Environment: !Ref DeploymentEnvironment
+        BusinessUnit: brave-core
+        Project: "https://github.com/brave/devops/projects/29"
+        RequestID: "https://github.com/brave/slim-list-lambda/pull/17"
+
+  SlimListAssembleLambdaLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DependsOn: SlimListAssembleLambda
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ''
+          - - '/aws/lambda/'
+            - !Ref SlimListAssembleLambda
+      RetentionInDays: 14
+
+  SlimListAssembleLambdaMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    DependsOn: SlimListAssembleLambdaLogGroup
+    Properties:
+      LogGroupName:
+        !Ref SlimListAssembleLambdaLogGroup
+      FilterPattern: "Found 0 recently used exception rules"
+      MetricTransformations:
+        -
+          MetricValue: "1"
+          MetricNamespace: "SlimListAssembleLambda/MetricFilter"
+          MetricName: "SlimListAssembleLambdaMetricFilter"
+
+  AssembleLambdaErrorMetricFilterGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    DependsOn: SlimListAssembleLambdaMetricFilter
+    Properties:
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Assemble Lambda"
+            - "Found 0 recently used exception rules"
+      AlarmActions:
+        - !Ref SlimListLambdaSNSArn
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 2
+      MetricName: SlimListAssembleLambdaMetricFilter
+      Namespace: SlimListAssembleLambda/MetricFilter
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  AliasAssembleErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Aseemble"
+            - "Lambda Function Error > 0"
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListAssembleLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListAssembleLambda
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  LatestAssembleVersionErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Assemble"
+            - "Lambda Function Error > 0"
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListAssembleLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListAssembleLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListAssembleLambda.Version.Version
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 0
+
+  AliasAssembleWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: !Ref EnableInvocationMetricAlarms
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Alias Assemble"
+            - "Lambda Function Invocations < 1"
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListAssembleLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListAssembleLambda
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 86400
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 7
+
+  LatestAssembleVersionWeeklyInvocationMetricAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: !Ref EnableInvocationMetricAlarms
+      AlarmDescription:
+        Fn::Join:
+          - ' '
+          - - !Ref DeploymentEnvironment
+            - "Latest Assemble"
+            - "Lambda Function Invocations < 1"
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Join
+            - ':'
+            - - !Sub "${SlimListAssembleLambda}"
+              - !Ref DeploymentEnvironment
+        - Name: FunctionName
+          Value: !Ref SlimListAssembleLambda
+        - Name: ExecutedVersion
+          Value: !GetAtt SlimListAssembleLambda.Version.Version
+      EvaluationPeriods: 1
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Period: 86400
+      Statistic: Sum
+      TreatMissingData: notBreaching
+      Threshold: 7
+
+  SsmAssembleLambdaArn:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/DeploymentConfig/SlimList/Resources/\
+        Lambda/Assemble/LambdaArn"
+      Type: "String"
+      Value:
+        Fn::GetAtt:
+          - SlimListAssembleLambda
+          - Arn
+      Description: "Resource ARN for Assemble Lambda for Slim List"
+      Tags:
+        Name: ssm-slim-list-lambda-assemble
+        ApplicationID: slim-list
+        ResourceName: slim-list-lambda-assemble
+        Security: private
+        Owner: brave-core
+        Environment: !Ref DeploymentEnvironment
+        BusinessUnit: brave-core
+        Project: "https://github.com/brave/devops/projects/29"
+        RequestID: "https://github.com/brave/slim-list-lambda/pull/17"

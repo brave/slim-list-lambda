@@ -4,8 +4,8 @@
  * @file
  * Functions for recording data to RDS.
  */
-const AWSXRay = require('aws-xray-sdk-core');
-const pgLib = AWSXRay.capturePostgres(require('pg'));
+const AWSXRay = require('aws-xray-sdk-core')
+const pgLib = AWSXRay.capturePostgres(require('pg'))
 
 const braveDebugLib = require('./debug')
 const braveHashLib = require('./hash')
