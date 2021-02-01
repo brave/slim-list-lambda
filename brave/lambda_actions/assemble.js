@@ -59,7 +59,7 @@ const validateArgs = async inputArgs => {
       default: 'adblock-data'
     },
     readAcl: {
-      validate: stringCheck,
+      validate: isString,
       default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
     },
     bucketOwner: {
