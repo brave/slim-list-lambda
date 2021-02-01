@@ -55,6 +55,10 @@ const validateArgs = async inputArgs => {
       validate: isString,
       default: `slim-list/${(new Date()).toISOString()}.json`
     },
+    readAcl: {
+      validate: stringCheck,
+      default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
+    },
     bucketOwner: {
       validate: isString,
       default: 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
@@ -104,7 +108,6 @@ const start = async args => {
   braveDebugLib.log(`Saving slim-list with ${combinedRules.length} rules`)
   const rulesJSON = JSON.stringify(combinedRules)
 
-  const readAcl = 'uri="http://acs.amazonaws.com/groups/global/AllUsers"'
   await braveS3Lib.write(args.s3Bucket, args.s3Key, rulesJSON, readAcl, args.bucketOwner)
   await braveS3Lib.write(args.s3Bucket, 'slim-list/latest.json', rulesJSON, readAcl, args.bucketOwner)
 }

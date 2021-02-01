@@ -58,6 +58,10 @@ const validateArgs = async inputArgs => {
       validate: isString,
       default: 'adblock-data'
     },
+    readAcl: {
+      validate: stringCheck,
+      default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
+    },
     bucketOwner: {
       validate: isString,
       default: 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
@@ -98,7 +102,6 @@ const start = async args => {
 
   braveDebugLib.log('About to convert default list to iOS content blocking syntax')
   const { contentBlockingRules, datBuffer, filtersUsed } = convertRules(rulesToAssemble, FilterFormat.STANDARD)
-  const readAcl = 'uri="http://acs.amazonaws.com/groups/global/AllUsers"'
   braveDebugLib.log('Saving the set of default rules used')
   await braveS3Lib.write(args.destS3Bucket, 'ios/latest.txt', filtersUsed, readAcl, args.bucketOwner)
 
