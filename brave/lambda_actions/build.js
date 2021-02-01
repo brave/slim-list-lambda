@@ -56,7 +56,7 @@ const validateArgs = async inputArgs => {
       default: `slim-list/${(new Date()).toISOString()}.json`
     },
     readAcl: {
-      validate: stringCheck,
+      validate: isString,
       default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
     },
     bucketOwner: {
