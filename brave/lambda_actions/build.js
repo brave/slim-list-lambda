@@ -108,8 +108,8 @@ const start = async args => {
   braveDebugLib.log(`Saving slim-list with ${combinedRules.length} rules`)
   const rulesJSON = JSON.stringify(combinedRules)
 
-  await braveS3Lib.write(args.s3Bucket, args.s3Key, rulesJSON, readAcl, args.bucketOwner)
-  await braveS3Lib.write(args.s3Bucket, 'slim-list/latest.json', rulesJSON, readAcl, args.bucketOwner)
+  await braveS3Lib.write(args.s3Bucket, args.s3Key, rulesJSON, args.readAcl, args.bucketOwner)
+  await braveS3Lib.write(args.s3Bucket, 'slim-list/latest.json', rulesJSON, args.readAcl, args.bucketOwner)
 }
 
 module.exports = {
