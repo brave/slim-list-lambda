@@ -9,4 +9,4 @@ sh /tmp/sh.rustup.rs -y;
 source ~/.cargo/env;
 npm install;
 npm i npm@latest -g;
-npm audit fix;
+npm config set audit false;
