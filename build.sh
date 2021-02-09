@@ -7,6 +7,7 @@ yum install -y openssl-devel;
 curl https://sh.rustup.rs -sSf > /tmp/sh.rustup.rs;
 sh /tmp/sh.rustup.rs -y;
 source ~/.cargo/env;
+npm config set audit false;
 npm install;
 npm i npm@latest -g;
-npm config set audit false;
+#npm audit fix;
