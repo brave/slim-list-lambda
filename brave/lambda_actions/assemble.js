@@ -92,13 +92,13 @@ const start = async args => {
   braveDebugLib.log('About to convert default list to iOS content blocking syntax')
   const { contentBlockingRules, datBuffer, filtersUsed } = convertRules(rulesToAssemble, FilterFormat.STANDARD)
   braveDebugLib.log('Saving the set of default rules used')
-  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.txt', filtersUsed, args.bucketOwner)
+  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.txt', filtersUsed)
 
   braveDebugLib.log('Saving the new default content-blocking rules')
-  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.json', contentBlockingRules, args.bucketOwner)
+  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.json', contentBlockingRules)
 
   braveDebugLib.log('Saving the new default DAT')
-  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.dat', datBuffer, args.bucketOwner)
+  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.dat', datBuffer)
 
   const regionalCatalog = JSON.parse(await requestPromiseLib(REGIONAL_CATALOG_URL))
   for (const regionalList of regionalCatalog) {
@@ -111,13 +111,13 @@ const start = async args => {
     braveDebugLib.log(`About to convert ${regionalList.title} to iOS content blocking syntax`)
     const { contentBlockingRules, datBuffer, filtersUsed } = convertRules(rules, regionalList.format)
     braveDebugLib.log(`Saving the set of rules used from ${regionalList.title}`)
-    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.txt`, filtersUsed, args.bucketOwner)
+    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.txt`, filtersUsed)
 
     braveDebugLib.log(`Saving the new content-blocking rules for ${regionalList.title}`)
-    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.json`, contentBlockingRules, args.bucketOwner)
+    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.json`, contentBlockingRules)
 
     braveDebugLib.log(`Saving the new DAT for ${regionalList.title}`)
-    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.dat`, datBuffer, args.bucketOwner)
+    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.dat`, datBuffer)
   }
 }
 
