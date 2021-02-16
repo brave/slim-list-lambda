@@ -64,12 +64,6 @@ const braveValidationLib = require('../validation')
  *  - breath {number}
  *      The number of same eTLD+1 pages to look for per "depth" / recursion.
  *      Defaults to 3.
- *  - readAcl {string}
- *      The S3 ACL associated to objects that are written.
- *      Defaults to 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
- *  - bucketOwner {string}
- *      The Canonical ID of the account which owns destS3Bucket.
- *      Defaults to 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
  *
  * @return [bool, object|string]
  *   Returns either false, and then a string describing the error in the
@@ -132,14 +126,6 @@ const validateArgs = async inputArgs => {
     domains: {
       validate: isAllString,
       default: undefined
-    },
-    readAcl: {
-      validate: isString,
-      default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
-    },
-    bucketOwner: {
-      validate: isString,
-      default: 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
     }
   }
 
@@ -217,20 +203,20 @@ const start = async args => {
 
   const s3KeyPrefix = `${args.batch}/`
   await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}manifest.json`,
-    JSON.stringify(manifest), args.readAcl, args.bucketOwner)
+    JSON.stringify(manifest))
 
   for (const filterListHash of Object.keys(filterListHashTextMap)) {
     await braveS3Lib.write(args.destS3Bucket,
       `${s3KeyPrefix}${filterListHash}`,
-      filterListHashTextMap[filterListHash], args.readAcl, args.bucketOwner)
+      filterListHashTextMap[filterListHash])
   }
 
   await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}domains.json`,
-    JSON.stringify(domainsToCrawl), args.readAcl, args.bucketOwner)
+    JSON.stringify(domainsToCrawl))
 
   const adBlockDat = braveAdBlockLib.serializeRules(combinedRules)
   await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}rules.dat`,
-    adBlockDat, args.readAcl, args.bucketOwner)
+    adBlockDat)
 
   for (const aDomain of domainsToCrawl) {
     const jobDesc = Object.create(null)
@@ -243,8 +229,6 @@ const start = async args => {
     jobDesc.breath = args.breath
     jobDesc.currentBreath = 0
     jobDesc.bucket = args.destS3Bucket
-    jobDesc.readAcl = args.readAcl
-    jobDesc.bucketOwner = args.bucketOwner
     jobDesc.sqsQueue = args.sqsQueue
     jobDesc.sqsRecordQueue = args.sqsRecordQueue
     const jobString = JSON.stringify(jobDesc)

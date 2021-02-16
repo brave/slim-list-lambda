@@ -54,12 +54,6 @@ const braveValidationLib = require('../validation')
  *      pages).
  *  - sqsRecordQueue {string}
  *      The SQS queue to write recording jobs into.
- *  - readAcl {string}
- *      The S3 ACL associated to objects that are written.
- *      Defaults to 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
- *  - bucketOwner {string}
- *      The Canonical ID of the account which owns destS3Bucket.
- *      Defaults to 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
  *
  * Optional args:
  *  - secs {number}
@@ -122,14 +116,6 @@ const validateArgs = async inputArgs => {
     path: {
       validate: braveValidationLib.allOfType.bind(undefined, 'number'),
       default: [0]
-    },
-    readAcl: {
-      validate: stringCheck,
-      default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
-    },
-    bucketOwner: {
-      validate: stringCheck,
-      default: 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
     }
   }
 
@@ -296,7 +282,7 @@ const _crawlPage = async (page, args) => {
   crawlData.breath = args.currentBreath
   crawlData.depth = args.currentDepth
   crawlData.timestamp = (new Date()).toISOString()
-  await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData), args.readAcl, args.bucketOwner)
+  await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData))
 
   const sqsMessage = Object.create(null)
   sqsMessage.batch = args.batch
