@@ -54,6 +54,9 @@ const braveValidationLib = require('../validation')
  *      pages).
  *  - sqsRecordQueue {string}
  *      The SQS queue to write recording jobs into.
+ *  - readAcl {string}
+ *      The S3 ACL associated to objects that are written.
+ *      Defaults to 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
  *
  * Optional args:
  *  - secs {number}
@@ -116,6 +119,10 @@ const validateArgs = async inputArgs => {
     path: {
       validate: braveValidationLib.allOfType.bind(undefined, 'number'),
       default: [0]
+    },
+    readAcl: {
+      validate: stringCheck,
+      default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
     }
   }
 
@@ -282,7 +289,7 @@ const _crawlPage = async (page, args) => {
   crawlData.breath = args.currentBreath
   crawlData.depth = args.currentDepth
   crawlData.timestamp = (new Date()).toISOString()
-  await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData))
+  await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData), args.readAcl)
 
   const sqsMessage = Object.create(null)
   sqsMessage.batch = args.batch
