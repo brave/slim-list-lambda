@@ -64,6 +64,9 @@ const braveValidationLib = require('../validation')
  *  - breath {number}
  *      The number of same eTLD+1 pages to look for per "depth" / recursion.
  *      Defaults to 3.
+ *  - readAcl {string}
+ *      The S3 ACL associated to objects that are written.
+ *      Defaults to 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
  *
  * @return [bool, object|string]
  *   Returns either false, and then a string describing the error in the
@@ -126,6 +129,10 @@ const validateArgs = async inputArgs => {
     domains: {
       validate: isAllString,
       default: undefined
+    },
+    readAcl: {
+      validate: isString,
+      default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
     }
   }
 
@@ -203,20 +210,20 @@ const start = async args => {
 
   const s3KeyPrefix = `${args.batch}/`
   await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}manifest.json`,
-    JSON.stringify(manifest))
+    JSON.stringify(manifest), args.readAcl)
 
   for (const filterListHash of Object.keys(filterListHashTextMap)) {
     await braveS3Lib.write(args.destS3Bucket,
       `${s3KeyPrefix}${filterListHash}`,
-      filterListHashTextMap[filterListHash])
+      filterListHashTextMap[filterListHash], args.readAcl)
   }
 
   await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}domains.json`,
-    JSON.stringify(domainsToCrawl))
+    JSON.stringify(domainsToCrawl), args.readAcl)
 
   const adBlockDat = braveAdBlockLib.serializeRules(combinedRules)
   await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}rules.dat`,
-    adBlockDat)
+    adBlockDat, args.readAcl)
 
   for (const aDomain of domainsToCrawl) {
     const jobDesc = Object.create(null)
@@ -229,6 +236,7 @@ const start = async args => {
     jobDesc.breath = args.breath
     jobDesc.currentBreath = 0
     jobDesc.bucket = args.destS3Bucket
+    jobDesc.readAcl = args.readAcl
     jobDesc.sqsQueue = args.sqsQueue
     jobDesc.sqsRecordQueue = args.sqsRecordQueue
     const jobString = JSON.stringify(jobDesc)
