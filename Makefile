@@ -6,7 +6,6 @@ TMP_RESOURCES := $(TMP_WORKSPACE)/resources
 DOCKER_IMAGE := lambci/lambda:nodejs12.x
 
 FUNCTION_NAME=slim-list-generator
-FUNCTION_S3_BUCKET=abp-lambda-funcs20181113170947211800000001
 
 clean:
 	rm -rf node_modules/
@@ -55,7 +54,7 @@ test-crawl-dispatch:
 test-crawl:
 	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) -e DEBUG=1 -e VERBOSE=1 -it -v \
 		$(PWD)/$(TMP_WORKSPACE):/var/task $(DOCKER_IMAGE) index.dispatch \
-		'{"action": "crawl", "url": "https://cnn.com", "depth": 2, "sqsRecordQueue": "https://sqs.us-east-1.amazonaws.com/275005321946/brave-slim-list-record"}'
+		'{"action": "crawl", "url": "https://cnn.com", "depth": 2, "sqsRecordQueue": "https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/brave-slim-list-record"}'
 
 test-record:
 	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
@@ -68,10 +67,5 @@ test-build:
 		-e AWS_REGION=$(AWS_REGION) -e PG_HOSTNAME="$(PG_HOSTNAME)" -e PG_PORT=5432 -e PG_USERNAME="$(PG_USERNAME)" \
 		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 -it -v $(PWD)/$(TMP_WORKSPACE):/var/task $(DOCKER_IMAGE) index.dispatch \
 		'{"action": "build", "batch": "$(BATCH)"}'
-
-deploy:
-	aws s3 cp $(TMP_WORKSPACE)/$(FUNCTION_NAME).zip s3://$(FUNCTION_S3_BUCKET)/$(FUNCTION_NAME).zip
-	aws lambda update-function-code --function-name $(FUNCTION_NAME) --s3-bucket $(FUNCTION_S3_BUCKET) --s3-key $(FUNCTION_NAME).zip
-	aws lambda update-function-code --function-name $(FUNCTION_NAME)-record --s3-bucket $(FUNCTION_S3_BUCKET) --s3-key $(FUNCTION_NAME).zip
 
 build: clean install-lambda bundle
