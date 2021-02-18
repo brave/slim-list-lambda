@@ -27,9 +27,6 @@ const braveValidationLib = require('../validation')
  *      `com.brave.research.slim-list`
  *  - s3Key {string}
  *      The S3 key to write slim list to.  Defaults to `slim-list/<date>.json`
- *  - bucketOwner {string}
- *      The Canonical ID of the account which owns destS3Bucket.
- *      Defaults to 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
  *
  * @return [bool, object|string]
  *   Returns either false, and then a string describing the error in the
@@ -58,10 +55,6 @@ const validateArgs = async inputArgs => {
     readAcl: {
       validate: isString,
       default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
-    },
-    bucketOwner: {
-      validate: isString,
-      default: 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
     }
   }
 
@@ -108,8 +101,8 @@ const start = async args => {
   braveDebugLib.log(`Saving slim-list with ${combinedRules.length} rules`)
   const rulesJSON = JSON.stringify(combinedRules)
 
-  await braveS3Lib.write(args.s3Bucket, args.s3Key, rulesJSON, args.readAcl, args.bucketOwner)
-  await braveS3Lib.write(args.s3Bucket, 'slim-list/latest.json', rulesJSON, args.readAcl, args.bucketOwner)
+  await braveS3Lib.write(args.s3Bucket, args.s3Key, rulesJSON, args.readAcl)
+  await braveS3Lib.write(args.s3Bucket, 'slim-list/latest.json', rulesJSON, args.readAcl)
 }
 
 module.exports = {

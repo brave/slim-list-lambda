@@ -34,9 +34,6 @@ const REGIONAL_CATALOG_URL = 'https://raw.githubusercontent.com/brave/adblock-re
  *      The S3 key to read slim list from.  Defaults to `slim-list/latest.json`
  *  - destS3Bucket {string}
  *      The S3 bucket to write to. Defaults to `adblock-data`
- *  - bucketOwner {string}
- *      The Canonical ID of the account which owns destS3Bucket.
- *      Defaults to 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
  *
  * @return [bool, object|string]
  *   Returns either false, and then a string describing the error in the
@@ -54,17 +51,13 @@ const validateArgs = async inputArgs => {
       validate: isString,
       default: 'slim-list/latest.json'
     },
-    destS3Bucket: {
-      validate: isString,
-      default: 'adblock-data'
-    },
     readAcl: {
       validate: isString,
       default: 'uri="http://acs.amazonaws.com/groups/global/AuthenticatedUsers"'
     },
-    bucketOwner: {
+    destS3Bucket: {
       validate: isString,
-      default: 'id="eb241751bdcc963195c53b3df68bfe8855c629a972a2a787006db80b1d40caa8"'
+      default: 'adblock-data'
     }
   }
 
@@ -103,13 +96,13 @@ const start = async args => {
   braveDebugLib.log('About to convert default list to iOS content blocking syntax')
   const { contentBlockingRules, datBuffer, filtersUsed } = convertRules(rulesToAssemble, FilterFormat.STANDARD)
   braveDebugLib.log('Saving the set of default rules used')
-  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.txt', filtersUsed, args.readAcl, args.bucketOwner)
+  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.txt', filtersUsed, args.readAcl)
 
   braveDebugLib.log('Saving the new default content-blocking rules')
-  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.json', contentBlockingRules, args.readAcl, args.bucketOwner)
+  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.json', contentBlockingRules, args.readAcl)
 
   braveDebugLib.log('Saving the new default DAT')
-  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.dat', datBuffer, args.readAcl, args.bucketOwner)
+  await braveS3Lib.write(args.destS3Bucket, 'ios/latest.dat', datBuffer, args.readAcl)
 
   const regionalCatalog = JSON.parse(await requestPromiseLib(REGIONAL_CATALOG_URL))
   for (const regionalList of regionalCatalog) {
@@ -122,13 +115,13 @@ const start = async args => {
     braveDebugLib.log(`About to convert ${regionalList.title} to iOS content blocking syntax`)
     const { contentBlockingRules, datBuffer, filtersUsed } = convertRules(rules, regionalList.format)
     braveDebugLib.log(`Saving the set of rules used from ${regionalList.title}`)
-    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.txt`, filtersUsed, args.readAcl, args.bucketOwner)
+    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.txt`, filtersUsed, args.readAcl)
 
     braveDebugLib.log(`Saving the new content-blocking rules for ${regionalList.title}`)
-    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.json`, contentBlockingRules, args.readAcl, args.bucketOwner)
+    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.json`, contentBlockingRules, args.readAcl)
 
     braveDebugLib.log(`Saving the new DAT for ${regionalList.title}`)
-    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.dat`, datBuffer, args.readAcl, args.bucketOwner)
+    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.dat`, datBuffer, args.readAcl)
   }
 }
 
