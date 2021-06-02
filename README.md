@@ -34,4 +34,4 @@ Structure of S3 Crawl Data
 Deployment
 ---
 
-Slim List lambdas are deployed into a staging and production account.  In order to deploy to the staging environment, perform merges/pushes on the `staging` branch.  To deploy to production, perform merges/pushes on the `main` branch.  In order to gain access to these AWS environments, please ping DevOps team in #devops Brave Slack channel.
+Slim List lambdas are deployed into a staging and production account.  In order to deploy to the staging environment, perform merges/pushes on the `main` branch.  To deploy to production, perform merges/pushes on the `production` branch.  In order to gain access to these AWS environments, please ping DevOps team in #devops Brave Slack channel.
