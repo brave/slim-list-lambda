@@ -8,12 +8,13 @@ const braveDebugLib = require('../debug')
 const braveHashLib = require('../hash')
 const braveS3Lib = require('../s3')
 const braveSQSLib = require('../sqs')
+const braveTrancoLib = require('../tranco')
 const braveValidationLib = require('../validation')
 
 /**
  * @file
  * This lambda action does the necessary preparation work for preparing
- * a crawl of a large number of pages (as determined by the alexa lists),
+ * a crawl of a large number of pages (as determined by the Tranco lists),
  * writes that preparatory data into S3, and then kicks off the child workers,
  * that are responsible for crawling individual pages / sites.
  */
@@ -25,14 +26,8 @@ const braveValidationLib = require('../validation')
  *
  * These arguments are optional and have defaults.
  *  - domains {array.string}
- *      An array of domains to crawl.  If this is provided, then the arguments
- *      about fetching domain lists (listS3Bucket, listS3Key) are ignored.
- *  - listS3Bucket {string}
- *      If provided, the name of the S3 bucket that list data will be
- *      pulled from.  This is ignored if `domains` is provided.
- *  - listS3Key {string}
- *      The key to read out of the `listS3Bucket` to fetch lists of domains
- *      to crawl.  This is ignored if `url` is provided.
+ *      An array of domains to crawl.  If not provided, domains are determined
+ *      by the current Tranco listings.
  *  - destS3Bucket {string}
  *      The S3 bucket to use for recording information into.  Defaults
  *      to `com.brave.research.slim-list`.
@@ -79,14 +74,6 @@ const validateArgs = async inputArgs => {
   const isAllString = braveValidationLib.allOfTypeAndTruthy.bind(undefined, 'string')
 
   const validationRules = {
-    listS3Bucket: {
-      validate: isString,
-      default: undefined
-    },
-    listS3Key: {
-      validate: isString,
-      default: undefined
-    },
     destS3Bucket: {
       validate: isString,
       default: 'com.brave.research.slim-list'
@@ -166,18 +153,18 @@ const validateArgs = async inputArgs => {
  *     the SQS queue.
  */
 const start = async args => {
-  let domainsToCrawl = args.domains
+  let domainsToCrawl
   const manifest = Object.create(null)
   manifest.date = (new Date()).toISOString()
   manifest.count = args.count
   manifest.batch = args.batch
 
-  if (domainsToCrawl === undefined) {
-    domainsToCrawl = (await braveS3Lib.read(args.listS3Bucket, args.listS3Key))
-      .toString('utf8')
-      .split('\n')
-    manifest.domainsSource = `s3://${args.listS3Bucket}/${args.listS3Key}`
+  if (args.domains === undefined) {
+    const [trancoUrl, trancoDomains] = await braveTrancoLib.get(args.count)
+    domainsToCrawl = trancoDomains
+    manifest.domainsSource = trancoUrl
   } else {
+    domainsToCrawl = args.domains
     manifest.domainsSource = 'inline'
   }
 
