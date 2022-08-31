@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brave-experiments/slim-list-lambda.git"
+    "url": "git+https://github.com/brave/slim-list-lambda.git"
   },
   "author": "Peter Snyder <pes@brave.com>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/brave-experiments/slim-list-lambda/issues"
+    "url": "https://github.com/brave/slim-list-lambda/issues"
   },
-  "homepage": "https://github.com/brave-experiments/slim-list-lambda#readme",
+  "homepage": "https://github.com/brave/slim-list-lambda#readme",
   "dependencies": {
     "adblock-rs": "^0.3.7",
     "aws-sdk": "^2.574.0",
