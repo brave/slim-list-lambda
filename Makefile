@@ -3,28 +3,28 @@ SHELL := /bin/bash
 TMP_WORKSPACE := build
 TMP_RESOURCES := $(TMP_WORKSPACE)/resources
 
-DOCKER_IMAGE := lambci/lambda:nodejs12.x
+DOCKER_IMAGE := public.ecr.aws/lambda/nodejs:12
 
 FUNCTION_NAME=slim-list-generator
 
 clean:
 	rm -rf node_modules/
-	rm -rf $(TMP_WORKSPACE)
+	rm -rf $(TMP_WORKSPACE)/
 
 install:
 	npm install
 
 install-lambda:
-	docker run --rm -v $(PWD):/var/task lambci/lambda:build-nodejs12.x ./build.sh
+	docker run --rm -v $(PWD):/var/task public.ecr.aws/sam/build-nodejs12.x ./build.sh
 
 lite-build:
-	cp -r brave index.js $(TMP_WORKSPACE)
+	cp -r brave index.js $(TMP_WORKSPACE)/
 
 bundle:
 	mkdir -p $(TMP_RESOURCES)/
 	cp -r brave node_modules index.js $(TMP_WORKSPACE)/
 	rm -rf $(TMP_WORKSPACE)/node_modules/aws-sdk
-	find $(TMP_WORKSPACE) -type d -name depot_tools | xargs rm -rf
+	find $(TMP_WORKSPACE)/ -type d -name depot_tools | xargs rm -rf
 	rm -rf $(TMP_WORKSPACE)/node_modules/ad-block/test
 	rm -rf $(TMP_WORKSPACE)/node_modules/ad-block/node_modules
 	rm -rf $(TMP_WORKSPACE)/node_modules/ad-block/vendor
