@@ -53,7 +53,7 @@ const write = async (bucket, key, bufferOrString, readAcl, contentType='applicat
     Key: key,
     Body: bufferOrString,
     GrantRead: readAcl,
-    contentType: contentType
+    ContentType: contentType
   }
 
   await globalS3.putObject(s3Query).promise()
