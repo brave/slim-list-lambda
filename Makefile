@@ -3,7 +3,7 @@ SHELL := /bin/bash
 TMP_WORKSPACE := build
 TMP_RESOURCES := $(TMP_WORKSPACE)/resources
 
-DOCKER_IMAGE := public.ecr.aws/lambda/nodejs:16
+DOCKER_IMAGE := slim-list-test:latest
 
 FUNCTION_NAME=slim-list-generator
 
@@ -19,6 +19,9 @@ install-lambda:
 
 lite-build:
 	cp -r brave index.js $(TMP_WORKSPACE)/
+
+build-docker:
+	docker build -t $(DOCKER_IMAGE) .
 
 bundle:
 	mkdir -p $(TMP_RESOURCES)/
@@ -46,26 +49,37 @@ bundle:
 	cd $(TMP_WORKSPACE)/ && zip -r $(FUNCTION_NAME).zip *
 
 test-crawl-dispatch:
-	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
+	trap "docker rm -f slim-list-test" EXIT; \
+	docker run --rm -p 9000:8080 --name slim-list-test -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		-e AWS_REGION=$(AWS_REGION) -e PG_HOSTNAME="$(PG_HOSTNAME)" -e PG_PORT=5432 -e PG_USERNAME="$(PG_USERNAME)" \
-		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 -it -v $(PWD)/$(TMP_WORKSPACE):/var/task $(DOCKER_IMAGE) index.dispatch \
-		'{"action": "crawl-dispatch", "domains": ["example.com"] }'
+		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 $(DOCKER_IMAGE) index.dispatch & \
+	(until </dev/tcp/localhost/9000 ; do sleep 5; done) 2>/dev/null; \
+	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"action": "crawl-dispatch", "domains": ["example.com"] }'
 
 test-crawl:
-	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) -e DEBUG=1 -e VERBOSE=1 -it -v \
-		$(PWD)/$(TMP_WORKSPACE):/var/task $(DOCKER_IMAGE) index.dispatch \
+	trap "docker rm -f slim-list-test" EXIT; \
+	docker run --rm -p 9000:8080 --name slim-list-test -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) -e DEBUG=1 -e VERBOSE=1 -v \
+		$(PWD)/$(TMP_WORKSPACE):/var/task $(DOCKER_IMAGE) index.dispatch & \
+	(until </dev/tcp/localhost/9000 ; do sleep 5; done) 2>/dev/null; \
+	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d \
 		'{"action": "crawl", "url": "https://cnn.com", "depth": 2, "sqsRecordQueue": "https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/brave-slim-list-record"}'
 
 test-record:
-	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
+	trap "docker rm -f slim-list-test" EXIT; \
+	docker run --rm -p 9000:8080 --name slim-list-test -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		-e AWS_REGION=$(AWS_REGION) -e PG_HOSTNAME="$(PG_HOSTNAME)" -e PG_PORT=5432 -e PG_USERNAME="$(PG_USERNAME)" \
-		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 -it -v $(PWD)/$(TMP_WORKSPACE):/var/task $(DOCKER_IMAGE) index.dispatch \
+		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 $(DOCKER_IMAGE) index.dispatch & \
+	(until </dev/tcp/localhost/9000 ; do sleep 5; done) 2>/dev/null; \
+	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d \
 		'{"action": "record", "batch": "$(BATCH)", "domain": "$(DOMAIN)", "position": "$(POSITION)"}'
 
 test-build:
-	docker run -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
+	trap "docker rm -f slim-list-test" EXIT; \
+	docker run --rm -p 9000:8080 --name slim-list-test -e LOCAL_TEST=1 -e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		-e AWS_REGION=$(AWS_REGION) -e PG_HOSTNAME="$(PG_HOSTNAME)" -e PG_PORT=5432 -e PG_USERNAME="$(PG_USERNAME)" \
-		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 -it -v $(PWD)/$(TMP_WORKSPACE):/var/task $(DOCKER_IMAGE) index.dispatch \
+		-e PG_PASSWORD="$(PG_PASSWORD)" -e DEBUG=1 -e VERBOSE=1 $(DOCKER_IMAGE) index.dispatch & \
+	(until </dev/tcp/localhost/9000 ; do sleep 5; done) 2>/dev/null; \
+	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d \
 		'{"action": "build", "batch": "$(BATCH)"}'
 
 build: clean install-lambda bundle
