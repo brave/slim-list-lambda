@@ -102,7 +102,7 @@ Resources:
       Description: "Lambda function that is triggered
         by a CloudWatch Event cron to gather adblock lists."
       Handler: "index.dispatch"
-      Runtime: nodejs12.x
+      Runtime: nodejs16.x
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
@@ -233,7 +233,7 @@ Resources:
       Description: "Lambda function that processes information
         sent through brave-slim-list SQS queue."
       Handler: "index.dispatch"
-      Runtime: nodejs12.x
+      Runtime: nodejs16.x
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
@@ -360,7 +360,7 @@ Resources:
       Description: "Lambda function that processes messages
         from the SQS queue brave-slim-list-record"
       Handler: "index.dispatch"
-      Runtime: nodejs12.x
+      Runtime: nodejs16.x
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
@@ -488,7 +488,7 @@ Resources:
       Description: "Lambda function that stores slimmed down adblock
         list in publicly readable S3 bucket"
       Handler: "index.dispatch"
-      Runtime: nodejs12.x
+      Runtime: nodejs16.x
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 900
       MemorySize: 2048
@@ -685,7 +685,7 @@ Resources:
         rule file as well as a corresponding DAT file to be loaded
         by adblock-rust browser-side."
       Handler: "index.dispatch"
-      Runtime: nodejs12.x
+      Runtime: nodejs16.x
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 900
       MemorySize: 2048
