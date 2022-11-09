@@ -2,7 +2,7 @@
 
 const urlLib = require('url')
 
-const chromiumLib = require('chrome-aws-lambda')
+const chromiumLib = require('@sparticuz/chrome-aws-lambda')
 const puppeteerLib = chromiumLib.puppeteer
 const randomJsLib = require('random-js')
 const tldjsLib = require('tldjs')
