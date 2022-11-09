@@ -197,7 +197,7 @@ const start = async args => {
 
   const s3KeyPrefix = `${args.batch}/`
   await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}manifest.json`,
-    JSON.stringify(manifest), args.readAcl)
+    JSON.stringify(manifest), args.readAcl, 'application/json')
 
   for (const filterListHash of Object.keys(filterListHashTextMap)) {
     await braveS3Lib.write(args.destS3Bucket,
@@ -206,7 +206,7 @@ const start = async args => {
   }
 
   await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}domains.json`,
-    JSON.stringify(domainsToCrawl), args.readAcl)
+    JSON.stringify(domainsToCrawl), args.readAcl, 'application/json')
 
   const adBlockDat = braveAdBlockLib.serializeRules(combinedRules)
   await braveS3Lib.write(args.destS3Bucket, `${s3KeyPrefix}rules.dat`,

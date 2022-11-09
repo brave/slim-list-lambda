@@ -46,13 +46,14 @@ const read = async (bucket, key) => {
   return result.Body
 }
 
-const write = async (bucket, key, bufferOrString, readAcl) => {
+const write = async (bucket, key, bufferOrString, readAcl, contentType='application/octet-stream') => {
   debugLib.verbose(`Writing to S3: s3://${bucket}/${key}`)
   const s3Query = {
     Bucket: bucket,
     Key: key,
     Body: bufferOrString,
-    GrantRead: readAcl
+    GrantRead: readAcl,
+    ContentType: contentType
   }
 
   await globalS3.putObject(s3Query).promise()

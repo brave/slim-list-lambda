@@ -102,7 +102,7 @@ const start = async args => {
   const rulesJSON = JSON.stringify(combinedRules)
 
   await braveS3Lib.write(args.s3Bucket, args.s3Key, rulesJSON, args.readAcl)
-  await braveS3Lib.write(args.s3Bucket, 'slim-list/latest.json', rulesJSON, args.readAcl)
+  await braveS3Lib.write(args.s3Bucket, 'slim-list/latest.json', rulesJSON, args.readAcl, 'application/json')
 }
 
 module.exports = {

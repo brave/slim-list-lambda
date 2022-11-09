@@ -172,10 +172,12 @@ const getClient = async _ => {
     host: _config.pg.host,
     database: 'slim_lists_db',
     password: _config.pg.password,
-    port: _config.pg.port
+    port: _config.pg.port,
+    statement_timeout: 30000,
+    query_timeout: 30000,
+    connectionTimeoutMillis: 30000,
   })
-  client.connect()
-  braveDebugLib.verbose('Connected to database')
+  client.connect().then(() => braveDebugLib.verbose('Connected to database')).catch(err => console.error('connection error', err.stack))
   return client
 }
 

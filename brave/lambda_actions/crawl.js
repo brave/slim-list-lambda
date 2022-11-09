@@ -2,7 +2,7 @@
 
 const urlLib = require('url')
 
-const chromiumLib = require('chrome-aws-lambda')
+const chromiumLib = require('@sparticuz/chrome-aws-lambda')
 const puppeteerLib = chromiumLib.puppeteer
 const randomJsLib = require('random-js')
 const tldjsLib = require('tldjs')
@@ -245,7 +245,7 @@ const _crawlPage = async (page, args) => {
   if (timeElapsed < waitTime) {
     const additionalWaitTime = waitTime - timeElapsed
     braveDebugLib.verbose(`Waiting an extra: ${additionalWaitTime}ms`)
-    await page.waitFor(additionalWaitTime)
+    await page.waitForTimeout(additionalWaitTime)
   }
 
   page.removeListener('requestfinished', callbackHandler)
@@ -289,7 +289,7 @@ const _crawlPage = async (page, args) => {
   crawlData.breath = args.currentBreath
   crawlData.depth = args.currentDepth
   crawlData.timestamp = (new Date()).toISOString()
-  await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData), args.readAcl)
+  await braveS3Lib.write(args.bucket, s3Key, JSON.stringify(crawlData), args.readAcl, 'application/json')
 
   const sqsMessage = Object.create(null)
   sqsMessage.batch = args.batch
