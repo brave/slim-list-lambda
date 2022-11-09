@@ -245,7 +245,7 @@ const _crawlPage = async (page, args) => {
   if (timeElapsed < waitTime) {
     const additionalWaitTime = waitTime - timeElapsed
     braveDebugLib.verbose(`Waiting an extra: ${additionalWaitTime}ms`)
-    await page.waitFor(additionalWaitTime)
+    await page.waitForTimeout(additionalWaitTime)
   }
 
   page.removeListener('requestfinished', callbackHandler)
