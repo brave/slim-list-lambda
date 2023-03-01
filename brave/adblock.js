@@ -12,12 +12,14 @@ const braveDebugLib = require('./debug')
 const serializeRules = rules => {
   braveDebugLib.verbose(`Serializing ${rules.length} rules`)
   const filterSet = new adblockRsLib.FilterSet(true)
-  filterSet.addFilters(rules, adblockRsLib.FilterFormat.STANDARD)
+  filterSet.addFilters(rules, { format: adblockRsLib.FilterFormat.STANDARD, rule_types: adblockRsLib.RuleTypes.NETWORK_ONLY })
   const adBlockArgs = {
     optimize: false
   }
   const adBlockClient = new adblockRsLib.Engine(filterSet, adBlockArgs)
-  const adBlockDat = adBlockClient.serialize()
+  // TODO migrate to `adBlockClient.serializeRaw()` once Brave iOS has
+  // supported reading it for long enough
+  const adBlockDat = adBlockClient.serializeCompressed()
   const adBlockDatBuffer = Buffer.from(adBlockDat)
   braveDebugLib.verbose(`Successfully serialized rules into buffer of length ${adBlockDatBuffer.byteLength}`)
   return adBlockDatBuffer

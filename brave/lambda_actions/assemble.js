@@ -130,10 +130,10 @@ const start = async args => {
 //
 // Returns { contentBlockingRules, datBuffer } as a JSON string and Buffer, respectively.
 const convertRules = (rules, format) => {
-  const filterSet = new FilterSet(true)
+  const filterSet = new FilterSet(true, { rule_types: RuleTypes.NETWORK_ONLY })
   filterSet.addFilters(rules, format)
 
-  const { contentBlockingRules, filtersUsed } = filterSet.intoContentBlocking(RuleTypes.NETWORK_ONLY)
+  const { contentBlockingRules, filtersUsed } = filterSet.intoContentBlocking()
   braveDebugLib.log(`Successfully converted ${filtersUsed.length} into ${contentBlockingRules.length} content blocking rules`)
 
   if (filtersUsed.length === 0 || contentBlockingRules.length === 0) {
@@ -146,7 +146,9 @@ const convertRules = (rules, format) => {
   const iosFilterSet = new FilterSet(true)
   iosFilterSet.addFilters(filtersUsed)
   const engine = new Engine(iosFilterSet, { optimize: false })
-  const iosDat = engine.serialize()
+  // TODO migrate to `engine.serializeRaw()` once Brave iOS has supported it
+  // for long enough
+  const iosDat = engine.serializeCompressed()
   const datBuffer = Buffer.from(iosDat)
 
   if (datBuffer.byteLength === 0) {
