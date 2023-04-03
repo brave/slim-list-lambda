@@ -689,7 +689,8 @@ Resources:
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 900
       MemorySize: 4096
-      EphemeralStorage: 2048
+      EphemeralStorage:
+        Size: 2048
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
