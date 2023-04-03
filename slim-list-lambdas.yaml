@@ -688,7 +688,8 @@ Resources:
       Runtime: nodejs16.x
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 900
-      MemorySize: 2048
+      MemorySize: 4096
+      EphemeralStorage: 2048
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
