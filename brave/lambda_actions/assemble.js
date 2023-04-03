@@ -131,7 +131,7 @@ const start = async args => {
 // Returns { contentBlockingRules, datBuffer } as a JSON string and Buffer, respectively.
 const convertRules = (rules, format) => {
   const filterSet = new FilterSet(true, { rule_types: RuleTypes.NETWORK_ONLY })
-  filterSet.addFilters(rules, format)
+  filterSet.addFilters(rules, { format })
 
   const { contentBlockingRules, filtersUsed } = filterSet.intoContentBlocking()
   braveDebugLib.log(`Successfully converted ${filtersUsed.length} into ${contentBlockingRules.length} content blocking rules`)
