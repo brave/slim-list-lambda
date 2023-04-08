@@ -136,12 +136,6 @@ const convertRules = (rules, format) => {
   const { contentBlockingRules, filtersUsed } = filterSet.intoContentBlocking()
   braveDebugLib.log(`Successfully converted ${filtersUsed.length} into ${contentBlockingRules.length} content blocking rules`)
 
-  if (filtersUsed.length === 0 || contentBlockingRules.length === 0) {
-    const errMsg = 'Looks like something is wrong with adblock-rust. ' +
-                   'There should never be zero rules generated.'
-    throw Error(errMsg)
-  }
-
   braveDebugLib.log('About to serialize a DAT from the successfully converted rules')
   const iosFilterSet = new FilterSet(true)
   iosFilterSet.addFilters(filtersUsed)
