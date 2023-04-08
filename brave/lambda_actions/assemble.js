@@ -130,17 +130,11 @@ const start = async args => {
 //
 // Returns { contentBlockingRules, datBuffer } as a JSON string and Buffer, respectively.
 const convertRules = (rules, format) => {
-  const filterSet = new FilterSet(true, { rule_types: RuleTypes.NETWORK_ONLY })
-  filterSet.addFilters(rules, { format })
+  const filterSet = new FilterSet(true)
+  filterSet.addFilters(rules, { format, rule_types: RuleTypes.NETWORK_ONLY })
 
   const { contentBlockingRules, filtersUsed } = filterSet.intoContentBlocking()
   braveDebugLib.log(`Successfully converted ${filtersUsed.length} into ${contentBlockingRules.length} content blocking rules`)
-
-  if (filtersUsed.length === 0 || contentBlockingRules.length === 0) {
-    const errMsg = 'Looks like something is wrong with adblock-rust. ' +
-                   'There should never be zero rules generated.'
-    throw Error(errMsg)
-  }
 
   braveDebugLib.log('About to serialize a DAT from the successfully converted rules')
   const iosFilterSet = new FilterSet(true)
