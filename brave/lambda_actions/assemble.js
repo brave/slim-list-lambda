@@ -106,23 +106,30 @@ const start = async args => {
   await braveS3Lib.write(args.destS3Bucket, 'ios/latest.dat', datBuffer, args.readAcl)
 
   const regionalCatalog = JSON.parse(await requestPromiseLib(REGIONAL_CATALOG_URL))
-  for (const regionalList of regionalCatalog) {
-    const regionalListContent = (await requestPromiseLib(regionalList.url)).trim()
-    if (regionalListContent.length === 0) {
-      console.error(`${regionalList.title} returned an empty result. Skipping.`)
-      continue
+  for (const regionalEntry of regionalCatalog) {
+    let rules = []
+    for (const source of regionalEntry.sources) {
+      if (source.format !== FilterFormat.STANDARD) {
+        throw new Error('slim-list currently does not support list formats other than STANDARD')
+      }
+      const thisListContent = (await requestPromiseLib(source.url)).trim()
+      if (thisListContent.length === 0) {
+        console.error(`${source} returned an empty result. Skipping.`)
+        continue
+      }
+      // https://github.com/nodejs/node/issues/16870#issuecomment-342738511
+      rules = [...rules, ...thisListContent.split('\n')]
     }
-    const rules = regionalListContent.split('\n')
-    braveDebugLib.log(`About to convert ${regionalList.title} to iOS content blocking syntax`)
-    const { contentBlockingRules, datBuffer, filtersUsed } = convertRules(rules, regionalList.format)
-    braveDebugLib.log(`Saving the set of rules used from ${regionalList.title}`)
-    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.txt`, filtersUsed, args.readAcl, 'text/plain')
+    braveDebugLib.log(`About to convert ${regionalEntry.title} to iOS content blocking syntax`)
+    const { contentBlockingRules, datBuffer, filtersUsed } = convertRules(rules, FilterFormat.STANDARD)
+    braveDebugLib.log(`Saving the set of rules used from ${regionalEntry.title}`)
+    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalEntry.uuid}-latest.txt`, filtersUsed, args.readAcl, 'text/plain')
 
-    braveDebugLib.log(`Saving the new content-blocking rules for ${regionalList.title}`)
-    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.json`, contentBlockingRules, args.readAcl, 'application/json')
+    braveDebugLib.log(`Saving the new content-blocking rules for ${regionalEntry.title}`)
+    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalEntry.uuid}-latest.json`, contentBlockingRules, args.readAcl, 'application/json')
 
-    braveDebugLib.log(`Saving the new DAT for ${regionalList.title}`)
-    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalList.uuid}-latest.dat`, datBuffer, args.readAcl)
+    braveDebugLib.log(`Saving the new DAT for ${regionalEntry.title}`)
+    await braveS3Lib.write(args.destS3Bucket, `ios/${regionalEntry.uuid}-latest.dat`, datBuffer, args.readAcl)
   }
 }
 
