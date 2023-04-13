@@ -109,7 +109,7 @@ const start = async args => {
   for (const regionalEntry of regionalCatalog) {
     const rules = []
     for (const source of regionalEntry.sources) {
-      const thisListContent = (await requestPromiseLib(regionalEntry.url)).trim()
+      const thisListContent = (await requestPromiseLib(source.url)).trim()
       if (thisListContent.length === 0) {
         console.error(`${source} returned an empty result. Skipping.`)
         continue
