@@ -107,7 +107,7 @@ const start = async args => {
 
   const regionalCatalog = JSON.parse(await requestPromiseLib(REGIONAL_CATALOG_URL))
   for (const regionalEntry of regionalCatalog) {
-    const rules = []
+    let rules = []
     for (const source of regionalEntry.sources) {
       if (source.format !== FilterFormat.STANDARD) {
         throw new Error('slim-list currently does not support list formats other than STANDARD')
@@ -117,7 +117,8 @@ const start = async args => {
         console.error(`${source} returned an empty result. Skipping.`)
         continue
       }
-      rules.push(...thisListContent.split('\n'))
+      // https://github.com/nodejs/node/issues/16870#issuecomment-342738511
+      rules = [...rules, ...thisListContent.split('\n')]
     }
     braveDebugLib.log(`About to convert ${regionalEntry.title} to iOS content blocking syntax`)
     const { contentBlockingRules, datBuffer, filtersUsed } = convertRules(rules, FilterFormat.STANDARD)
