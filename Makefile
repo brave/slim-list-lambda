@@ -43,7 +43,7 @@ bundle:
 	rm -rf $(TMP_WORKSPACE)/node_modules/core-js/client
 	rm -rf $(TMP_WORKSPACE)/node_modules/core-js/stage
 	rm -rf $(TMP_WORKSPACE)/node_modules/nan
-	find $(TMP_WORKSPACE)/node_modules/adblock-rs/native/target/release/ -type f -not -name libadblock_rs.so -delete
+	find $(TMP_WORKSPACE)/node_modules/adblock-rs/js/target/release/ -type f -not -name libadblock_rs.so -delete
 	find $(TMP_WORKSPACE)/node_modules -type f -name "*.md" -delete
 	find $(TMP_WORKSPACE)/node_modules -type d -name "test" | xargs rm -rf
 	cd $(TMP_WORKSPACE)/ && zip -r $(FUNCTION_NAME).zip *
