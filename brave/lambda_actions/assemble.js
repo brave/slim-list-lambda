@@ -1,6 +1,5 @@
 'use strict'
 
-const requestPromiseLib = require('request-promise')
 const { Engine, FilterSet, FilterFormat, RuleTypes } = require('adblock-rs')
 
 const braveDebugLib = require('../debug')
@@ -87,7 +86,7 @@ const start = async args => {
   braveDebugLib.log(`Fetched ${rulesToAssemble.length} rules from the slim list bucket.`)
 
   braveDebugLib.log('About to fetch and add rules from static lists')
-  const staticRuleLists = await Promise.all(STATIC_RULE_URLS.map(requestPromiseLib))
+  const staticRuleLists = await Promise.all(STATIC_RULE_URLS.map(url => fetch(url).then(r => r.text())))
   for (const staticRuleList of staticRuleLists) {
     const staticRules = staticRuleList.split('\n')
     rulesToAssemble.push(...staticRules)
@@ -105,14 +104,14 @@ const start = async args => {
   braveDebugLib.log('Saving the new default DAT')
   await braveS3Lib.write(args.destS3Bucket, 'ios/latest.dat', datBuffer, args.readAcl)
 
-  const regionalCatalog = JSON.parse(await requestPromiseLib(REGIONAL_CATALOG_URL))
+  const regionalCatalog = await fetch(REGIONAL_CATALOG_URL).then(r => r.json())
   for (const regionalEntry of regionalCatalog) {
     let rules = []
     for (const source of regionalEntry.sources) {
       if (source.format !== FilterFormat.STANDARD) {
         throw new Error('slim-list currently does not support list formats other than STANDARD')
       }
-      const thisListContent = (await requestPromiseLib(source.url)).trim()
+      const thisListContent = (await fetch(source.url).then(r => r.text())).trim()
       if (thisListContent.length === 0) {
         console.error(`${source} returned an empty result. Skipping.`)
         continue

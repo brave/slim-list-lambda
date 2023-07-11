@@ -1,7 +1,5 @@
 'use strict'
 
-const requestPromiseLib = require('request-promise')
-
 const braveAdBlockLib = require('../adblock')
 const braveDbLib = require('../db')
 const braveDebugLib = require('../debug')
@@ -177,7 +175,7 @@ const start = async args => {
   const filterListHashTextMap = Object.create(null)
   for (const filterListUrl of args.lists) {
     braveDebugLib.log('Fetching filter list: ' + filterListUrl)
-    const filterListText = (await requestPromiseLib(filterListUrl)).trim()
+    const filterListText = (await fetch(filterListUrl).then(r => r.text())).trim()
     const filterListHash = braveHashLib.sha256(filterListText)
     const filterListFetchTimestamp = (new Date()).toISOString()
     filterListUrlHashMap[filterListUrl] = filterListHash
