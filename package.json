@@ -4,8 +4,8 @@
   "description": "AWS Lambda functions to generate slim list versions of filter lists.",
   "main": "index.js",
   "scripts": {
-    "lint": "./node_modules/standard/bin/cmd.js",
-    "lint-fix": "./node_modules/standard/bin/cmd.js --fix"
+    "lint": "./node_modules/standard/bin/cmd.cjs",
+    "lint-fix": "./node_modules/standard/bin/cmd.cjs --fix"
   },
   "repository": {
     "type": "git",
@@ -32,6 +32,6 @@
     "uuid": "^3.3.3"
   },
   "devDependencies": {
-    "standard": "^14.1.0"
+    "standard": "^17.1.0"
   }
 }
