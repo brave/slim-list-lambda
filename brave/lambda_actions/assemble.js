@@ -146,9 +146,7 @@ const convertRules = (rules, format) => {
   const iosFilterSet = new FilterSet(true)
   iosFilterSet.addFilters(filtersUsed)
   const engine = new Engine(iosFilterSet, { optimize: false })
-  // TODO migrate to `engine.serializeRaw()` once Brave iOS has supported it
-  // for long enough
-  const iosDat = engine.serializeCompressed()
+  const iosDat = engine.serializeRaw()
   const datBuffer = Buffer.from(iosDat)
 
   if (datBuffer.byteLength === 0) {
