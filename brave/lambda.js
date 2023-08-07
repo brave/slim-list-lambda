@@ -3,8 +3,7 @@
 const fsLib = require('fs-extra')
 const utilLib = require('util')
 
-const AWSXRay = require('aws-xray-sdk')
-const awsSdkLib = AWSXRay.captureAWS(require('aws-sdk'))
+const awsSdkLib = require('aws-sdk')
 // const fkillLib = require('fkill')
 const globLib = require('glob')
 

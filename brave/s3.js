@@ -5,8 +5,7 @@
  * Common functions for reading and writing data to S3.
  */
 
-const AWSXRay = require('aws-xray-sdk-core')
-const awsSdkLib = AWSXRay.captureAWS(require('aws-sdk'))
+const awsSdkLib = require('aws-sdk')
 
 const debugLib = require('./debug')
 
