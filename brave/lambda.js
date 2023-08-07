@@ -3,8 +3,9 @@
 const fsLib = require('fs-extra')
 const utilLib = require('util')
 
-const AWSXRay = require('aws-xray-sdk')
-const awsSdkLib = AWSXRay.captureAWS(require('aws-sdk'))
+const {
+  Lambda
+} = require("@aws-sdk/client-lambda")
 // const fkillLib = require('fkill')
 const globLib = require('glob')
 
@@ -68,8 +69,8 @@ const invoke = async (lambdaName, args) => {
   lambdaParams.ClientContext = JSON.stringify(lambdaParams.ClientContext)
   lambdaParams.Payload = JSON.stringify(lambdaParams.Payload)
 
-  const lambdaClient = new awsSdkLib.Lambda({ apiVersion: '2015-03-31' })
-  await lambdaClient.invoke(lambdaParams).promise()
+  const lambdaClient = new Lambda({ apiVersion: '2015-03-31' })
+  await lambdaClient.invoke(lambdaParams)
 }
 
 const invokeWithResponse = async (lambdaName, args) => {
@@ -85,8 +86,8 @@ const invokeWithResponse = async (lambdaName, args) => {
   lambdaParams.ClientContext = JSON.stringify(lambdaParams.ClientContext)
   lambdaParams.Payload = JSON.stringify(lambdaParams.Payload)
 
-  const lambdaClient = new awsSdkLib.Lambda({ apiVersion: '2015-03-31' })
-  const result = await lambdaClient.invoke(lambdaParams).promise()
+  const lambdaClient = new Lambda({ apiVersion: '2015-03-31' })
+  const result = await lambdaClient.invoke(lambdaParams)
   return result.Payload.toString('utf8')
 }
 
