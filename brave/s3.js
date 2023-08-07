@@ -5,11 +5,13 @@
  * Common functions for reading and writing data to S3.
  */
 
-const awsSdkLib = require('aws-sdk')
+const {
+  S3
+} = require("@aws-sdk/client-s3")
 
 const debugLib = require('./debug')
 
-const globalS3 = new awsSdkLib.S3({
+const globalS3 = new S3({
   apiVersion: '2006-03-01',
   region: 'us-west-2'
 })
@@ -21,7 +23,7 @@ const list = async (bucket, prefix) => {
     Prefix: prefix
   }
 
-  const result = await globalS3.listObjectsV2(s3Query).promise()
+  const result = await globalS3.listObjectsV2(s3Query)
   debugLib.verbose(`Received ${result.KeyCount} results in S3 for query.`)
 
   const matchingKeys = []
@@ -39,7 +41,7 @@ const read = async (bucket, key) => {
     Key: key
   }
 
-  const result = await globalS3.getObject(s3Query).promise()
+  const result = await globalS3.getObject(s3Query)
   debugLib.verbose(`Received file of type ${result.ContentType} of size ${result.ContentLength}.`)
 
   return result.Body
@@ -55,7 +57,7 @@ const write = async (bucket, key, bufferOrString, readAcl, contentType='applicat
     ContentType: contentType
   }
 
-  await globalS3.putObject(s3Query).promise()
+  await globalS3.putObject(s3Query)
 
   debugLib.verbose(`Wrote file to s3://${bucket}/${key}`)
   return true
