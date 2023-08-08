@@ -65,7 +65,7 @@ const start = async args => {
 
   const crawlDataKey = `${args.batch}/data/${args.domain}/${args.position}.json`
   const crawlDataBuffer = await braveS3Lib.read(args.bucket, crawlDataKey)
-  const crawlData = JSON.parse(crawlDataBuffer.toString('utf8'))
+  const crawlData = JSON.parse(await crawlDataBuffer.transformToString('utf8'))
 
   const { url, data, breath, depth, timestamp } = crawlData
   const blockingResult = braveAdBlockLib.applyBlockingRules(adBlockClient, data)
