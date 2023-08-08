@@ -77,7 +77,7 @@ const validateArgs = async inputArgs => {
  */
 const start = async args => {
   let rulesToAssemble
-  const response = (await braveS3Lib.read(args.slimListS3Bucket, args.slimListS3Key)).toString('utf8')
+  const response = await (await braveS3Lib.read(args.slimListS3Bucket, args.slimListS3Key)).transformToString('utf8')
   try {
     rulesToAssemble = JSON.parse(response)
   } catch(e) {
