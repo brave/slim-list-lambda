@@ -76,15 +76,7 @@ const validateArgs = async inputArgs => {
  * from an existing slim-list.
  */
 const start = async args => {
-  let rulesToAssemble
-  const response = await (await braveS3Lib.read(args.slimListS3Bucket, args.slimListS3Key)).transformToString('utf8')
-  try {
-    rulesToAssemble = JSON.parse(response)
-  } catch(e) {
-    console.log(e)
-    console.log("Response:")
-    console.log(response)
-  }
+  const rulesToAssemble = JSON.parse(await (await braveS3Lib.read(args.slimListS3Bucket, args.slimListS3Key)).transformToString('utf8'))
 
   if (rulesToAssemble.length === 0) {
     const errMsg = '0 rules were fetched from the slim list bucket. This should never happen.'
