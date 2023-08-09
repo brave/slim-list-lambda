@@ -13,7 +13,7 @@ const debugLib = require('./debug')
 
 const globalS3 = new S3({
   apiVersion: '2006-03-01',
-  region: 'us-west-2'
+  region: process.env.AWS_REGION || 'us-west-2'
 })
 
 const list = async (bucket, prefix) => {
