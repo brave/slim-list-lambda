@@ -15,7 +15,7 @@ install:
 	npm install
 
 install-lambda:
-	docker run --rm -v $(PWD):/var/task public.ecr.aws/sam/build-nodejs16.x ./build.sh
+	docker run --rm -v $(PWD):/var/task public.ecr.aws/sam/build-nodejs18.x ./build.sh
 
 lite-build:
 	cp -r brave index.js $(TMP_WORKSPACE)/
