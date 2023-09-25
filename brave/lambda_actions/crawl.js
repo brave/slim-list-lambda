@@ -2,8 +2,8 @@
 
 const urlLib = require('url')
 
-const chromiumLib = require('@sparticuz/chrome-aws-lambda')
-const puppeteerLib = chromiumLib.puppeteer
+const chromiumLib = require('@sparticuz/chromium')
+const puppeteerLib = require('puppeteer-core')
 const randomJsLib = require('random-js')
 const tldjsLib = require('tldjs')
 
@@ -304,7 +304,7 @@ const start = async args => {
   const browser = await puppeteerLib.launch({
     args: chromiumLib.args,
     defaultViewport: chromiumLib.defaultViewport,
-    executablePath: await chromiumLib.executablePath,
+    executablePath: await chromiumLib.executablePath(),
     headless: chromiumLib.headless
   })
 
