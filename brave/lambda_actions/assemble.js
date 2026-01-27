@@ -10,10 +10,11 @@ const braveValidationLib = require('../validation')
 const COIN_MINER_URL = 'https://raw.githubusercontent.com/brave/adblock-lists/master/coin-miners.txt'
 const BRAVE_UNBREAK_URL_OLD = 'https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt'
 const BRAVE_UNBREAK_URL_NEW = 'https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-unbreak.txt'
+const BRAVE_SPECIFIC_URL = 'https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-specific.txt'
 const UBLOCK_UNBREAK_URL = 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/unbreak.txt'
 const NOTIFICATIONS_URL = 'https://easylist-downloads.adblockplus.org/fanboy-notifications.txt'
 const IOS_SPECIFIC_URL = 'https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-ios-specific.txt'
-const STATIC_RULE_URLS = [COIN_MINER_URL, BRAVE_UNBREAK_URL_OLD, BRAVE_UNBREAK_URL_NEW, UBLOCK_UNBREAK_URL, NOTIFICATIONS_URL, IOS_SPECIFIC_URL]
+const STATIC_RULE_URLS = [COIN_MINER_URL, BRAVE_UNBREAK_URL_OLD, BRAVE_UNBREAK_URL_NEW, BRAVE_SPECIFIC_URL, UBLOCK_UNBREAK_URL, NOTIFICATIONS_URL, IOS_SPECIFIC_URL]
 
 const REGIONAL_CATALOG_URL = 'https://raw.githubusercontent.com/brave/adblock-resources/master/filter_lists/regional.json'
 
