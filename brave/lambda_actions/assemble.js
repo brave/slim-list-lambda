@@ -15,6 +15,9 @@ const NOTIFICATIONS_URL = 'https://easylist-downloads.adblockplus.org/fanboy-not
 const IOS_SPECIFIC_URL = 'https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-ios-specific.txt'
 const STATIC_RULE_URLS = [COIN_MINER_URL, BRAVE_UNBREAK_URL_OLD, BRAVE_UNBREAK_URL_NEW, UBLOCK_UNBREAK_URL, NOTIFICATIONS_URL, IOS_SPECIFIC_URL]
 
+// we want to extract out all of the Ad-shield rules from this list
+const UBLOCK_FILTERS_GENERAL = 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-general.txt'
+
 const REGIONAL_CATALOG_URL = 'https://raw.githubusercontent.com/brave/adblock-resources/master/filter_lists/regional.json'
 
 /**
@@ -86,8 +89,14 @@ const start = async args => {
 
   braveDebugLib.log(`Fetched ${rulesToAssemble.length} rules from the slim list bucket.`)
 
+  braveDebugLib.log('About to fetch and filter ublock filters general list')
+  const filtersGeneralList = await fetch(UBLOCK_FILTERS_GENERAL).then(r => r.text())
+  const filteredGeneralRules = filtersGeneralList.split('\n').filter(line => !line.includes('html-load.com'))
+  braveDebugLib.log(`Filtered out html-load.com from ublock filters general list, found ${filteredGeneralRules.length} rules`)
+
   braveDebugLib.log('About to fetch and add rules from static lists')
   const staticRuleLists = await Promise.all(STATIC_RULE_URLS.map(url => fetch(url).then(r => r.text())))
+  staticRuleLists.push(filteredGeneralRules.join('\n'))
   for (const staticRuleList of staticRuleLists) {
     const staticRules = staticRuleList.split('\n')
     rulesToAssemble.push(...staticRules)
