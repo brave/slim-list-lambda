@@ -89,13 +89,22 @@ const start = async args => {
 
   braveDebugLib.log(`Fetched ${rulesToAssemble.length} rules from the slim list bucket.`)
 
-  const filtersGeneralList = await fetch(UBLOCK_FILTERS_GENERAL).then(r => r.text())
-  const filteredGeneralRules = filtersGeneralList.split('\n').filter(line => !line.includes('html-load.com'))
-  braveDebugLib.log(`Fetched filters-general and filtered out html-load.com from ublock filters general list. Found ${filteredGeneralRules.length} rules`)
-
   braveDebugLib.log('About to fetch and add rules from static lists')
   const staticRuleLists = await Promise.all(STATIC_RULE_URLS.map(url => fetch(url).then(r => r.text())))
-  staticRuleLists.push(filteredGeneralRules.join('\n'))
+
+  // Fetch filters-general, filter out Ad-Shield section, add to slim-list rules
+  const filtersGeneralList = await fetch(UBLOCK_FILTERS_GENERAL).then(r => r.text())
+  const lines = filtersGeneralList.split('\n')
+  const startIndex = lines.findIndex(line => line.includes('! SECTION: Ad-Shield'))
+  const endIndex = lines.findIndex(line => line.includes('! !SECTION: Ad-Shield'))
+  if (startIndex !== -1 && endIndex !== -1) {
+    const filteredGeneralRules = lines.slice(startIndex + 1, Index)
+    braveDebugLib.log(`Found ${filteredGeneralRules.length} Ad-Shield rules in filters-general`)
+    staticRuleLists.push(filteredGeneralRules.join('\n'))
+  } else {
+    // TODO: notify Ad-Shield not being included in slim-list
+  }
+
   for (const staticRuleList of staticRuleLists) {
     const staticRules = staticRuleList.split('\n')
     rulesToAssemble.push(...staticRules)
