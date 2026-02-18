@@ -70,6 +70,14 @@ Parameters:
     Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/DeploymentConfig/Databases/Aurora/\
       SlimList/DBPort"
+  SentryDSN:
+    Description: "Sentry DSN for Slim List"
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/DeploymentConfig/SlimList/SentryDSN"
+  SentryNodeLayerArnTemplate:
+    Description: "Template ARN for Sentry Node serverless SDK Lambda layer"
+    Type: String
+    Default: "943013980633:layer:SentryNodeServerlessSDKv10:52"
   DeploymentEnvironment:
     Description: "Slimi List Deployment Environment"
     Type: "AWS::SSM::Parameter::Value<String>"
@@ -691,6 +699,8 @@ Resources:
       MemorySize: 4096
       EphemeralStorage:
         Size: 2048
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:${SentryNodeLayerArnTemplate}"
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
@@ -698,6 +708,9 @@ Resources:
           PG_HOSTNAME: !Ref DatabaseHostName
           PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
           PG_PORT: !Ref DatabasePort
+          NODE_OPTIONS: "--import @sentry/aws-serverless/awslambda-auto"
+          SENTRY_DSN: !Ref SentryDSN
+          SENTRY_ENVIRONMENT: !Ref DeploymentEnvironment
           VERBOSE: !Ref VerboseFlag
       Tracing: !Ref TracingFlag
       DeadLetterQueue:
