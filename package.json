@@ -32,6 +32,9 @@
     "tldjs": "^2.3.1",
     "uuid": "^3.3.3"
   },
+  "overrides": {
+    "cargo-cp-artifact": "0.1.9"
+  },
   "devDependencies": {
     "standard": "17.1.2"
   }
