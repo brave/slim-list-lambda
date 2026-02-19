@@ -16,7 +16,7 @@ const NOTIFICATIONS_URL = 'https://easylist-downloads.adblockplus.org/fanboy-not
 const IOS_SPECIFIC_URL = 'https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-ios-specific.txt'
 const STATIC_RULE_URLS = [COIN_MINER_URL, BRAVE_UNBREAK_URL_OLD, BRAVE_UNBREAK_URL_NEW, BRAVE_SPECIFIC_URL, UBLOCK_UNBREAK_URL, NOTIFICATIONS_URL, IOS_SPECIFIC_URL]
 
-const REGIONAL_CATALOG_URL = 'https://raw.githubusercontent.com/brave/adblock-resources/master/filter_lists/regional.json'
+const REGIONAL_CATALOG_URL = 'https://raw.githubusercontent.com/brave/adblock-resources/master/filter_lists/list_catalog.json'
 
 /**
  * @file
@@ -108,6 +108,9 @@ const start = async args => {
 
   const regionalCatalog = await fetch(REGIONAL_CATALOG_URL).then(r => r.json())
   for (const regionalEntry of regionalCatalog) {
+    if (regionalEntry.default_enabled === true) {
+      continue
+    }
     let rules = []
     for (const source of regionalEntry.sources) {
       if (source.format !== FilterFormat.STANDARD) {
