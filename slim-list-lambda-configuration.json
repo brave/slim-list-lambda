@@ -2,6 +2,7 @@
   "Parameters" : {
     "TracingFlag" : "Active",
     "DebugFlag": 1,
-    "VerboseFlag": 0
+    "VerboseFlag": 0,
+    "SentryRelease": "unknown"
   }
 }

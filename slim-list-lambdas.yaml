@@ -74,6 +74,10 @@ Parameters:
     Description: "Sentry DSN for Slim List"
     Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/DeploymentConfig/SlimList/SentryDSN"
+  SentryRelease:
+    Description: "Sentry release version for Slim List"
+    Type: String
+    Default: "unknown"
   SentryNodeLayerArnTemplate:
     Description: "Template ARN for Sentry Node serverless SDK Lambda layer"
     Type: String
@@ -114,6 +118,8 @@ Resources:
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:${SentryNodeLayerArnTemplate}"
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
@@ -121,6 +127,10 @@ Resources:
           PG_HOSTNAME: !Ref DatabaseHostName
           PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
           PG_PORT: !Ref DatabasePort
+          NODE_OPTIONS: "--import @sentry/aws-serverless/awslambda-auto"
+          SENTRY_DSN: !Ref SentryDSN
+          SENTRY_ENVIRONMENT: !Ref DeploymentEnvironment
+          SENTRY_RELEASE: !Ref SentryRelease
           VERBOSE: !Ref VerboseFlag
       Tracing: !Ref TracingFlag
       DeadLetterQueue:
@@ -245,6 +255,8 @@ Resources:
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:${SentryNodeLayerArnTemplate}"
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
@@ -252,6 +264,10 @@ Resources:
           PG_HOSTNAME: !Ref DatabaseHostName
           PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
           PG_PORT: !Ref DatabasePort
+          NODE_OPTIONS: "--import @sentry/aws-serverless/awslambda-auto"
+          SENTRY_DSN: !Ref SentryDSN
+          SENTRY_ENVIRONMENT: !Ref DeploymentEnvironment
+          SENTRY_RELEASE: !Ref SentryRelease
           VERBOSE: !Ref VerboseFlag
       Tracing: !Ref TracingFlag
       DeadLetterQueue:
@@ -372,6 +388,8 @@ Resources:
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:${SentryNodeLayerArnTemplate}"
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
@@ -379,6 +397,10 @@ Resources:
           PG_HOSTNAME: !Ref DatabaseHostName
           PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
           PG_PORT: !Ref DatabasePort
+          NODE_OPTIONS: "--import @sentry/aws-serverless/awslambda-auto"
+          SENTRY_DSN: !Ref SentryDSN
+          SENTRY_ENVIRONMENT: !Ref DeploymentEnvironment
+          SENTRY_RELEASE: !Ref SentryRelease
           VERBOSE: !Ref VerboseFlag
       Tracing: !Ref TracingFlag
       ReservedConcurrentExecutions: 30
@@ -500,6 +522,8 @@ Resources:
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 900
       MemorySize: 2048
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:${SentryNodeLayerArnTemplate}"
       Environment:
         Variables:
           DEBUG: !Ref DebugFlag
@@ -507,6 +531,10 @@ Resources:
           PG_HOSTNAME: !Ref DatabaseHostName
           PG_PASSWORD: '{{resolve:secretsmanager:slim-list-aurora-password}}'
           PG_PORT: !Ref DatabasePort
+          NODE_OPTIONS: "--import @sentry/aws-serverless/awslambda-auto"
+          SENTRY_DSN: !Ref SentryDSN
+          SENTRY_ENVIRONMENT: !Ref DeploymentEnvironment
+          SENTRY_RELEASE: !Ref SentryRelease
           VERBOSE: !Ref VerboseFlag
       Tracing: !Ref TracingFlag
       DeadLetterQueue:
@@ -711,6 +739,7 @@ Resources:
           NODE_OPTIONS: "--import @sentry/aws-serverless/awslambda-auto"
           SENTRY_DSN: !Ref SentryDSN
           SENTRY_ENVIRONMENT: !Ref DeploymentEnvironment
+          SENTRY_RELEASE: !Ref SentryRelease
           VERBOSE: !Ref VerboseFlag
       Tracing: !Ref TracingFlag
       DeadLetterQueue:
