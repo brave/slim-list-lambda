@@ -1,8 +1,8 @@
 {
-  "Parameters" : {
-    "TracingFlag" : "Active",
-    "DebugFlag": 1,
-    "VerboseFlag": 0,
+  "Parameters": {
+    "TracingFlag": "Active",
+    "DebugFlag": "1",
+    "VerboseFlag": "0",
     "SentryRelease": "unknown"
   }
 }
