@@ -8,12 +8,22 @@
 const {
   SQS
 } = require("@aws-sdk/client-sqs")
+const httpsLib = require('https')
 
 const debugLib = require('./debug')
 
+const sqsClient = new SQS({
+  apiVersion: '2012-11-05',
+  requestHandler: {
+    httpsAgent: new httpsLib.Agent({
+      keepAlive: true,
+      maxSockets: 300
+    })
+  }
+})
+
 const write = async (queue, message) => {
   const msgFlat = typeof message === 'string' ? message : JSON.stringify(message)
-  const sqsClient = new SQS({ apiVersion: '2012-11-05' })
   debugLib.verbose(`Writing message ${msgFlat} to SQS: ${queue}`)
 
   const sqsMessage = Object.create(null)
