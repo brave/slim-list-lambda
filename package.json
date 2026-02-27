@@ -23,7 +23,7 @@
     "@aws-sdk/client-sqs": "3.995.0",
     "@sparticuz/chromium": "^117.0.0",
     "adblock-rs": "^0.7.18",
-    "fkill": "^6.2.0",
+    "fkill": "^10.0.0",
     "fs-extra": "^8.1.0",
     "glob": "^7.1.4",
     "pg": "^8.8.0",
