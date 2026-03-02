@@ -18,21 +18,24 @@
   },
   "homepage": "https://github.com/brave/slim-list-lambda#readme",
   "dependencies": {
-    "@aws-sdk/client-lambda": "3.386.0",
-    "@aws-sdk/client-s3": "3.386.0",
-    "@aws-sdk/client-sqs": "3.386.0",
+    "@aws-sdk/client-lambda": "3.995.0",
+    "@aws-sdk/client-s3": "3.995.0",
+    "@aws-sdk/client-sqs": "3.995.0",
     "@sparticuz/chromium": "^117.0.0",
     "adblock-rs": "^0.7.18",
     "fkill": "^6.2.0",
     "fs-extra": "^8.1.0",
     "glob": "^7.1.4",
     "pg": "^8.8.0",
-    "puppeteer-core": "21.3.4",
+    "puppeteer-core": "24.4.0",
     "random-js": "^2.1.0",
     "tldjs": "^2.3.1",
     "uuid": "^3.3.3"
   },
+  "overrides": {
+    "cargo-cp-artifact": "0.1.9"
+  },
   "devDependencies": {
-    "standard": "^17.1.0"
+    "standard": "17.1.2"
   }
 }
