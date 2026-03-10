@@ -24,7 +24,7 @@
     "@sparticuz/chromium": "^117.0.0",
     "adblock-rs": "^0.7.18",
     "fkill": "^6.2.0",
-    "fs-extra": "^8.1.0",
+    "fs-extra": "^11.0.0",
     "glob": "^7.1.4",
     "pg": "^8.8.0",
     "puppeteer-core": "24.4.0",
