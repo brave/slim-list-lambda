@@ -1,7 +1,16 @@
 'use strict'
 
 const { Engine, FilterSet, FilterFormat, RuleTypes } = require('adblock-rs')
-const Sentry = require('@sentry/aws-serverless')
+
+// Sentry is installed on Lambda in layers. We don't want to log to Sentry when
+// running locally, but still want the script to execute so we don't want to
+// fail if Sentry is unavailble.
+let Sentry
+try {
+  Sentry = require('@sentry/aws-serverless')
+} catch (_) {
+  Sentry = { captureMessage: () => {} }
+}
 
 const braveDebugLib = require('../debug')
 const braveS3Lib = require('../s3')
