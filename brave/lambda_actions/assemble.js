@@ -2,6 +2,16 @@
 
 const { Engine, FilterSet, FilterFormat, RuleTypes } = require('adblock-rs')
 
+// Sentry is installed on Lambda in layers. We don't want to log to Sentry when
+// running locally, but still want the script to execute so we don't want to
+// fail if Sentry is unavailble.
+let Sentry
+try {
+  Sentry = require('@sentry/aws-serverless')
+} catch (_) {
+  Sentry = { captureMessage: () => {} }
+}
+
 const braveDebugLib = require('../debug')
 const braveS3Lib = require('../s3')
 const braveValidationLib = require('../validation')
@@ -17,6 +27,9 @@ const IOS_SPECIFIC_URL = 'https://raw.githubusercontent.com/brave/adblock-lists/
 const STATIC_RULE_URLS = [COIN_MINER_URL, BRAVE_UNBREAK_URL_OLD, BRAVE_UNBREAK_URL_NEW, BRAVE_SPECIFIC_URL, UBLOCK_UNBREAK_URL, NOTIFICATIONS_URL, IOS_SPECIFIC_URL]
 
 const REGIONAL_CATALOG_URL = 'https://raw.githubusercontent.com/brave/adblock-resources/master/filter_lists/list_catalog.json'
+
+// Separate from STATIC_RULE_URLS as we want to extract out the Ad-shield section from this list
+const UBLOCK_FILTERS_GENERAL = 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-general.txt'
 
 /**
  * @file
@@ -88,7 +101,26 @@ const start = async args => {
   braveDebugLib.log(`Fetched ${rulesToAssemble.length} rules from the slim list bucket.`)
 
   braveDebugLib.log('About to fetch and add rules from static lists')
-  const staticRuleLists = await Promise.all(STATIC_RULE_URLS.map(url => fetch(url).then(r => r.text())))
+  // fetch `filtersGeneralList` separate as we want to extract out Ad-Shield section
+  const [filtersGeneralList, ...staticRuleLists] = await Promise.all([
+    fetch(UBLOCK_FILTERS_GENERAL).then(r => r.text()),
+    ...STATIC_RULE_URLS.map(url => fetch(url).then(r => r.text()))
+  ])
+
+  // filter out Ad-Shield section from filters-general, add to slim-list rules
+  const lines = filtersGeneralList.split('\n')
+  const startIndex = lines.findIndex(line => line.includes('! SECTION: Ad-Shield'))
+  const endIndex = lines.findIndex(line => line.includes('! !SECTION: Ad-Shield'))
+  if (startIndex !== -1 && endIndex !== -1 && (startIndex + 1) < endIndex) {
+    const filteredGeneralRules = lines.slice(startIndex + 1, endIndex)
+    braveDebugLib.log(`Found ${filteredGeneralRules.length} Ad-Shield lines in filters-general`)
+    staticRuleLists.push(filteredGeneralRules.join('\n'))
+  } else {
+    const msg = 'Ad-Shield section not found in filters-general. Ad-Shield rules were NOT included in this slim-list.'
+    braveDebugLib.log(msg)
+    Sentry.captureMessage(msg, 'warning')
+  }
+
   for (const staticRuleList of staticRuleLists) {
     const staticRules = staticRuleList.split('\n')
     rulesToAssemble.push(...staticRules)
