@@ -2,16 +2,6 @@
 
 const { Engine, FilterSet, FilterFormat, RuleTypes } = require('adblock-rs')
 
-// Sentry is installed on Lambda in layers. We don't want to log to Sentry when
-// running locally, but still want the script to execute so we don't want to
-// fail if Sentry is unavailble.
-let Sentry
-try {
-  Sentry = require('@sentry/aws-serverless')
-} catch (_) {
-  Sentry = { captureMessage: () => {} }
-}
-
 const braveDebugLib = require('../debug')
 const braveS3Lib = require('../s3')
 const braveValidationLib = require('../validation')
@@ -116,9 +106,9 @@ const start = async args => {
     braveDebugLib.log(`Found ${filteredGeneralRules.length} Ad-Shield lines in filters-general`)
     staticRuleLists.push(filteredGeneralRules.join('\n'))
   } else {
-    const msg = 'Ad-Shield section not found in filters-general. Ad-Shield rules were NOT included in this slim-list.'
+    const msg = 'Ad-Shield section not found in filters-general. We are unable to parse Ad-Shield rules for slim-list.'
     braveDebugLib.log(msg)
-    Sentry.captureMessage(msg, 'warning')
+    throw Error(msg)
   }
 
   for (const staticRuleList of staticRuleLists) {
