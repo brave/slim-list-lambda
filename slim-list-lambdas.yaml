@@ -81,7 +81,7 @@ Parameters:
   SentryNodeLayerArnTemplate:
     Description: "Template ARN for Sentry Node serverless SDK Lambda layer"
     Type: String
-    Default: "943013980633:layer:SentryNodeServerlessSDKv10:52"
+    Default: "943013980633:layer:SentryNodeServerlessSDKv10:58"
   DeploymentEnvironment:
     Description: "Slimi List Deployment Environment"
     Type: "AWS::SSM::Parameter::Value<String>"
