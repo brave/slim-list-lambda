@@ -67,7 +67,7 @@ const braveValidationLib = require('../validation')
  *   the crawl.
  */
 const validateArgs = async inputArgs => {
-  const genUuid4 = require('uuid/v4')
+  const { v4: genUuid4 } = require('uuid')
   const isString = braveValidationLib.ofTypeAndTruthy.bind(undefined, 'string')
   const isAllString = braveValidationLib.allOfTypeAndTruthy.bind(undefined, 'string')
 
