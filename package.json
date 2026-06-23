@@ -29,8 +29,7 @@
     "pg": "^8.8.0",
     "puppeteer-core": "24.4.0",
     "random-js": "^2.1.0",
-    "tldjs": "^2.3.1",
-    "uuid": "^14.0.0"
+    "tldjs": "^2.3.1"
   },
   "overrides": {
     "cargo-cp-artifact": "0.1.9"
