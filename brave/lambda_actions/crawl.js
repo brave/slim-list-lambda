@@ -245,7 +245,9 @@ const _crawlPage = async (page, args) => {
   if (timeElapsed < waitTime) {
     const additionalWaitTime = waitTime - timeElapsed
     braveDebugLib.verbose(`Waiting an extra: ${additionalWaitTime}ms`)
-    await page.waitForTimeout(additionalWaitTime)
+    // `page.waitForTimeout` was removed in recent puppeteer versions, so we
+    // wait using a plain promise-wrapped setTimeout instead.
+    await new Promise(resolve => setTimeout(resolve, additionalWaitTime))
   }
 
   page.removeListener('requestfinished', callbackHandler)
