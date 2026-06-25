@@ -233,7 +233,7 @@ const _crawlPage = async (page, args) => {
     braveDebugLib.verbose(`Requesting url: ${args.url}`)
     await page.goto(args.url)
   } catch (e) {
-    if ((e instanceof puppeteerLib.errors.TimeoutError) === false) {
+    if ((e instanceof puppeteerLib.TimeoutError) === false) {
       braveDebugLib.log(`Error doing top level fetch: ${e.toString()}`)
       return
     }
@@ -245,12 +245,10 @@ const _crawlPage = async (page, args) => {
   if (timeElapsed < waitTime) {
     const additionalWaitTime = waitTime - timeElapsed
     braveDebugLib.verbose(`Waiting an extra: ${additionalWaitTime}ms`)
-    // `page.waitForTimeout` was removed in recent puppeteer versions, so we
-    // wait using a plain promise-wrapped setTimeout instead.
     await new Promise(resolve => setTimeout(resolve, additionalWaitTime))
   }
 
-  page.removeListener('requestfinished', callbackHandler)
+  page.off('requestfinished', callbackHandler)
   braveDebugLib.verbose(`Captured ${report.length} requests.`)
 
   // Check to see if we should go "deeper"
