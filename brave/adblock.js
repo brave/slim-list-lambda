@@ -9,6 +9,13 @@ const adblockRsLib = require('adblock-rs')
 
 const braveDebugLib = require('./debug')
 
+// Non-network request URL schemes that adblock-rs can't parse a hostname from
+// (Request::new returns HostnameParseError). These are browser-internal or inline
+// resources, not real network requests, and show up routinely in crawl data. Drop
+// them so they don't abort the batch; anything else that fails to parse is
+// unexpected and should surface (with its value) so we can narrow it down.
+const NON_NETWORK_SCHEME_RE = /^(?:data|blob|about|javascript):/i
+
 const serializeRules = rules => {
   braveDebugLib.verbose(`Serializing ${rules.length} rules`)
   const filterSet = new adblockRsLib.FilterSet(true)
@@ -40,7 +47,22 @@ const applyBlockingRules = (adblockClient, requests) => {
     const requestType = aReport[4]
     const requestUrl = aReport[5]
 
-    const matchResult = adblockClient.check(requestUrl, frameUrl, requestType, true)
+    // Drop known non-network schemes up front: adblock-rs would throw
+    // "hostname parsing failed" on these, and they aren't real requests to block.
+    if (NON_NETWORK_SCHEME_RE.test(requestUrl)) {
+      braveDebugLib.verbose(`Dropping non-network request ${requestUrl} in frame ${frameUrl}`)
+      continue
+    }
+
+    let matchResult
+    try {
+      matchResult = adblockClient.check(requestUrl, frameUrl, requestType, true)
+    } catch (err) {
+      // Not a known non-network scheme, so this parse failure is unexpected.
+      // Re-throw with the offending values attached so Sentry shows what triggered
+      // it (the bare adblock-rs message doesn't include the URL).
+      throw new Error(`adblock check failed for requestUrl=${JSON.stringify(requestUrl)} frameUrl=${JSON.stringify(frameUrl)} requestType=${JSON.stringify(requestType)}: ${err.message}`, { cause: err })
+    }
     if (matchResult.matched === false) {
       if (matchResult.exception) {
         braveDebugLib.verbose(`Would block ${requestUrl} in frame ${frameUrl} of type ${requestType} with rule ${matchResult.filter} but excepted by ${matchResult.exception}`)
