@@ -255,6 +255,10 @@ Resources:
       CodeUri: ./build/slim-list-generator.zip
       Timeout: 600
       MemorySize: 2048
+      # Chromium (via @sparticuz/chromium) is extracted into /tmp and puppeteer
+      # creates a profile dir there too; the 512 MB default overflows (ENOSPC).
+      EphemeralStorage:
+        Size: 2048
       Layers:
         - !Sub "arn:aws:lambda:${AWS::Region}:${SentryNodeLayerArnTemplate}"
       Environment:
