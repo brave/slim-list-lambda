@@ -17,7 +17,7 @@ const serializeRules = rules => {
     optimize: false
   }
   const adBlockClient = new adblockRsLib.Engine(filterSet, adBlockArgs)
-  const adBlockDat = adBlockClient.serializeRaw()
+  const adBlockDat = adBlockClient.serialize()
   const adBlockDatBuffer = Buffer.from(adBlockDat)
   braveDebugLib.verbose(`Successfully serialized rules into buffer of length ${adBlockDatBuffer.byteLength}`)
   return adBlockDatBuffer
