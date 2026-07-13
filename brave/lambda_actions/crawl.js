@@ -317,14 +317,16 @@ const start = async args => {
   }
 
   braveDebugLib.verbose('Wrapping up and closing puppeteer.')
+  // browser.close() can hang when Chromium wedges, so cap how long we block on it.
+  // The timeout only stops us waiting; it does not cancel close(), which keeps
+  // running in the background (along with puppeteer's own temp userDataDir cleanup),
+  // so if the environment is reused the shutdown can still finish.
   try {
-    browser.close()
+    await Promise.race([
+      browser.close(),
+      new Promise(resolve => setTimeout(resolve, 15000))
+    ])
   } catch (_) {}
-
-  // We can't wait for the browser to always close cleanly, because it often
-  // will hang indefinitely.  So we just issue the request to close and wait
-  // 10 sec.
-  setTimeout(_ => {}, 10000)
 }
 
 module.exports = {

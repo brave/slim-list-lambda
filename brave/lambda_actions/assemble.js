@@ -173,7 +173,7 @@ const convertRules = (rules, format) => {
   const iosFilterSet = new FilterSet(true)
   iosFilterSet.addFilters(filtersUsed)
   const engine = new Engine(iosFilterSet, { optimize: false })
-  const iosDat = engine.serializeRaw()
+  const iosDat = engine.serialize()
   const datBuffer = Buffer.from(iosDat)
 
   if (datBuffer.byteLength === 0) {
