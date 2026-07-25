@@ -165,23 +165,63 @@ const _makeGetIdFunc = (table, textColumn) => {
   }
 }
 
-const getClient = async _ => {
-  const client = new pgLib.Client({
-    user: _config.pg.username,
-    host: _config.pg.host,
-    database: 'slim_lists_db',
-    password: _config.pg.password,
-    port: _config.pg.port,
-    statement_timeout: 30000,
-    query_timeout: 30000,
-    connectionTimeoutMillis: 30000,
-  })
-  client.connect().then(() => braveDebugLib.verbose('Connected to database')).catch(err => console.error('connection error', err.stack))
-  return client
+// Shared connection settings so the pool can't drift from the config.
+const _clientConfig = {
+  user: _config.pg.username,
+  host: _config.pg.host,
+  database: 'slim_lists_db',
+  password: _config.pg.password,
+  port: _config.pg.port,
+  statement_timeout: 30000,
+  query_timeout: 30000,
+  connectionTimeoutMillis: 10000,
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000
 }
 
-const closeClient = async client => {
-  await client.end()
+// Pooled connections reused across messages/invocations instead of reconnecting.
+// Total Aurora connections stays bounded by concurrency x pool size (e.g. 30 x 10).
+let _pool = null
+const _getPool = () => {
+  if (_pool === null) {
+    _pool = new pgLib.Pool({
+      ..._clientConfig,
+      max: Number(process.env.PG_POOL_MAX) || 10,
+      idleTimeoutMillis: 120000,
+      // Retire every connection ~1h after creation, bounding how stale one can get.
+      maxLifetimeSeconds: 3600,
+      // Postgres-side backstop for a connection ever left idle in a transaction.
+      idle_in_transaction_session_timeout: 30000
+    })
+    // Handle async pool errors so a dropped idle backend can't crash the process.
+    _pool.on('error', err => console.error('pg pool error', err.stack))
+  }
+  return _pool
+}
+
+// Retry transient checkout failures; short connect timeout bounds the worst case.
+const POOL_CONNECT_ATTEMPTS = 3
+const getClient = async _ => {
+  const pool = _getPool()
+  let lastErr
+  for (let attempt = 1; attempt <= POOL_CONNECT_ATTEMPTS; attempt += 1) {
+    try {
+      return await pool.connect()
+    } catch (err) {
+      lastErr = err
+      braveDebugLib.log(`pool.connect() attempt ${attempt}/${POOL_CONNECT_ATTEMPTS} failed: ${err.toString()}`)
+      if (attempt < POOL_CONNECT_ATTEMPTS) {
+        await new Promise(resolve => setTimeout(resolve, 200 * attempt))
+      }
+    }
+  }
+  throw lastErr
+}
+
+// Return a connection to the pool. Pass the error from a failed unit of work so a
+// possibly-dirty connection (e.g. left mid-transaction) is destroyed, not reused.
+const closeClient = (client, err) => {
+  client.release(err)
 }
 
 const _idForBatchCache = Object.create(null)

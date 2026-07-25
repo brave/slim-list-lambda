@@ -71,15 +71,17 @@ const start = async args => {
   const blockingResult = braveAdBlockLib.applyBlockingRules(adBlockClient, data)
 
   const dbClient = await braveDbLib.getClient()
+  let recordError
   try {
     await braveDbLib.recordPage(dbClient, args.batch, args.domain, url,
       depth, breath, timestamp, blockingResult.allowed, blockingResult.blocked)
   } catch (e) {
+    recordError = e
     braveDebugLib.log(`Error when recording to database: ${e.toString()}.`)
   }
 
   try {
-    await braveDbLib.closeClient(dbClient)
+    braveDbLib.closeClient(dbClient, recordError)
   } catch (_) {}
 }
 
