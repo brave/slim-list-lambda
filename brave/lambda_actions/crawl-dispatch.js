@@ -177,7 +177,11 @@ const start = async args => {
 
     for (const filterListUrl of args.lists) {
       braveDebugLib.log('Fetching filter list: ' + filterListUrl)
-      const filterListText = (await fetch(filterListUrl).then(r => r.text())).trim()
+      const res = await fetch(filterListUrl)
+      if (!res.ok) {
+        throw new Error(`Failed to fetch filter list ${filterListUrl}: ${res.status} ${res.statusText}`)
+      }
+      const filterListText = (await res.text()).trim()
       const filterListHash = braveHashLib.sha256(filterListText)
       const filterListFetchTimestamp = (new Date()).toISOString()
       filterListUrlHashMap[filterListUrl] = filterListHash
