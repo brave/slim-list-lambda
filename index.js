@@ -3,6 +3,16 @@
 const braveDebugLib = require('./brave/debug')
 const braveLambdaLib = require('./brave/lambda')
 
+// Sentry (auto-layer) caps breadcrumbs at 100, truncating a full invocation's
+// trail; no env var exists, so raise it on the live client. Guarded: the SDK is
+// only present via the Lambda layer, not in local/test installs.
+try {
+  const sentryOptions = require('@sentry/aws-serverless').getClient()?.getOptions()
+  if (sentryOptions) {
+    sentryOptions.maxBreadcrumbs = 200
+  }
+} catch (_) {}
+
 const dispatch = async lambdaEvent => {
   try {
     if (typeof lambdaEvent === 'string') {

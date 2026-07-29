@@ -58,9 +58,38 @@ const validateArgs = async inputArgs => {
   return [true, Object.freeze(msg)]
 }
 
+// Cache rules.dat bytes (immutable per batch) to avoid re-downloading per message;
+// a fresh engine is still parsed per message so a bad parse can't poison the batch.
+// Bounded LRU keyed by bucket+batch so interleaved crawls don't thrash a single slot.
+const RULES_CACHE_MAX_ENTRIES = 8
+const _rulesDataCache = new Map()
+
+const _getRulesData = async (bucket, batch) => {
+  const cacheKey = `${bucket}/${batch}`
+
+  const cached = _rulesDataCache.get(cacheKey)
+  if (cached !== undefined) {
+    // Re-insert to mark as most-recently-used.
+    _rulesDataCache.delete(cacheKey)
+    _rulesDataCache.set(cacheKey, cached)
+    braveDebugLib.verbose(`Reusing cached rules.dat for ${cacheKey}`)
+    return cached
+  }
+
+  braveDebugLib.verbose(`Fetching rules.dat for ${cacheKey}`)
+  const rulesBody = await braveS3Lib.read(bucket, `${batch}/rules.dat`)
+  const rulesData = await rulesBody.transformToByteArray()
+
+  _rulesDataCache.set(cacheKey, rulesData)
+  if (_rulesDataCache.size > RULES_CACHE_MAX_ENTRIES) {
+    const oldestKey = _rulesDataCache.keys().next().value
+    _rulesDataCache.delete(oldestKey)
+  }
+  return rulesData
+}
+
 const start = async args => {
-  const rulesData = await braveS3Lib.read(args.bucket,
-    `${args.batch}/rules.dat`)
+  const rulesData = await _getRulesData(args.bucket, args.batch)
   const adBlockClient = braveAdBlockLib.createClient(rulesData)
 
   const crawlDataKey = `${args.batch}/data/${args.domain}/${args.position}.json`
@@ -71,15 +100,17 @@ const start = async args => {
   const blockingResult = braveAdBlockLib.applyBlockingRules(adBlockClient, data)
 
   const dbClient = await braveDbLib.getClient()
+  let recordError
   try {
     await braveDbLib.recordPage(dbClient, args.batch, args.domain, url,
       depth, breath, timestamp, blockingResult.allowed, blockingResult.blocked)
   } catch (e) {
+    recordError = e
     braveDebugLib.log(`Error when recording to database: ${e.toString()}.`)
   }
 
   try {
-    await braveDbLib.closeClient(dbClient)
+    braveDbLib.closeClient(dbClient, recordError)
   } catch (_) {}
 }
 
