@@ -79,12 +79,19 @@ const start = async args => {
 
   braveDebugLib.log(`About to query for up to ${maxRules} rules used in the last ${args.days} days`)
   const dbClient = await braveDbLib.getClient()
-  const exceptionRules = await braveDbLib.popularExceptionRules(dbClient, earliestBatchToConsider, maxRules)
-  const numExceptionRules = exceptionRules.length
-  braveDebugLib.log(`Found ${numExceptionRules} recently used exception rules`)
+  let exceptionRules
+  let blockingRules
+  try {
+    exceptionRules = await braveDbLib.popularExceptionRules(dbClient, earliestBatchToConsider, maxRules)
+    braveDebugLib.log(`Found ${exceptionRules.length} recently used exception rules`)
 
-  const maxBlockingRules = maxRules - numExceptionRules
-  const blockingRules = await braveDbLib.popularBlockingRules(dbClient, earliestBatchToConsider, maxBlockingRules)
+    const maxBlockingRules = maxRules - exceptionRules.length
+    blockingRules = await braveDbLib.popularBlockingRules(dbClient, earliestBatchToConsider, maxBlockingRules)
+  } finally {
+    // Read-only queries, so a plain release back to the pool is safe.
+    braveDbLib.closeClient(dbClient)
+  }
+  const numExceptionRules = exceptionRules.length
   const numBlockingRules = blockingRules.length
   braveDebugLib.log(`Found ${numBlockingRules} recently used blocking rules`)
 

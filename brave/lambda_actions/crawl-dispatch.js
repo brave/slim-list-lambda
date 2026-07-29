@@ -167,21 +167,35 @@ const start = async args => {
   }
 
   // Record batch information to the database.
-  const dbClient = await braveDbLib.getClient()
-  await braveDbLib.recordBatchWithTags(dbClient, args.batch, manifest.date,
-    args.tags)
-
   const filterListUrlHashMap = Object.create(null)
   const filterListHashTextMap = Object.create(null)
-  for (const filterListUrl of args.lists) {
-    braveDebugLib.log('Fetching filter list: ' + filterListUrl)
-    const filterListText = (await fetch(filterListUrl).then(r => r.text())).trim()
-    const filterListHash = braveHashLib.sha256(filterListText)
-    const filterListFetchTimestamp = (new Date()).toISOString()
-    filterListUrlHashMap[filterListUrl] = filterListHash
-    filterListHashTextMap[filterListHash] = filterListText
-    await braveDbLib.recordFilterRules(dbClient, filterListUrl,
-      filterListFetchTimestamp, filterListHash, filterListText.split('\n'))
+  const dbClient = await braveDbLib.getClient()
+  let dbError
+  try {
+    await braveDbLib.recordBatchWithTags(dbClient, args.batch, manifest.date,
+      args.tags)
+
+    for (const filterListUrl of args.lists) {
+      braveDebugLib.log('Fetching filter list: ' + filterListUrl)
+      const res = await fetch(filterListUrl)
+      if (!res.ok) {
+        throw new Error(`Failed to fetch filter list ${filterListUrl}: ${res.status} ${res.statusText}`)
+      }
+      const filterListText = (await res.text()).trim()
+      const filterListHash = braveHashLib.sha256(filterListText)
+      const filterListFetchTimestamp = (new Date()).toISOString()
+      filterListUrlHashMap[filterListUrl] = filterListHash
+      filterListHashTextMap[filterListHash] = filterListText
+      await braveDbLib.recordFilterRules(dbClient, filterListUrl,
+        filterListFetchTimestamp, filterListHash, filterListText.split('\n'))
+    }
+  } catch (e) {
+    dbError = e
+    throw e
+  } finally {
+    // Writes above use transactions; on error destroy the connection rather than
+    // return a possibly-dirty one to the pool.
+    braveDbLib.closeClient(dbClient, dbError)
   }
 
   manifest.filterLists = filterListUrlHashMap

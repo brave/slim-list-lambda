@@ -7,13 +7,18 @@
 
 const {
   S3
-} = require("@aws-sdk/client-s3")
+} = require('@aws-sdk/client-s3')
 
 const debugLib = require('./debug')
 
 const globalS3 = new S3({
   apiVersion: '2006-03-01',
-  region: process.env.AWS_REGION || 'us-west-2'
+  region: process.env.AWS_REGION || 'us-west-2',
+  // Transparent end-to-end integrity: add a checksum on upload and validate it on
+  // download when the object has one. These are the SDK defaults; set explicitly so
+  // the guarantee is not lost if a future default changes.
+  requestChecksumCalculation: 'WHEN_SUPPORTED',
+  responseChecksumValidation: 'WHEN_SUPPORTED'
 })
 
 const list = async (bucket, prefix) => {
@@ -47,7 +52,7 @@ const read = async (bucket, key) => {
   return result.Body
 }
 
-const write = async (bucket, key, bufferOrString, readAcl, contentType='application/octet-stream') => {
+const write = async (bucket, key, bufferOrString, readAcl, contentType = 'application/octet-stream') => {
   debugLib.verbose(`Writing to S3: s3://${bucket}/${key}`)
   const s3Query = {
     Bucket: bucket,
