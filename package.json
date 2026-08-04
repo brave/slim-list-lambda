@@ -4,8 +4,8 @@
   "description": "AWS Lambda functions to generate slim list versions of filter lists.",
   "main": "index.js",
   "scripts": {
-    "lint": "./node_modules/standard/bin/cmd.cjs",
-    "lint-fix": "./node_modules/standard/bin/cmd.cjs --fix"
+    "lint": "eslint",
+    "lint-fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -35,7 +35,8 @@
     "cargo-cp-artifact": "0.1.9"
   },
   "devDependencies": {
-    "standard": "17.1.2"
+    "eslint": "^9.39.5",
+    "neostandard": "^0.13.0"
   },
   "allowScripts": {
     "adblock-rs": true
