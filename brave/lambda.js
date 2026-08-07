@@ -5,7 +5,7 @@ const utilLib = require('util')
 
 const {
   Lambda
-} = require("@aws-sdk/client-lambda")
+} = require('@aws-sdk/client-lambda')
 // const fkillLib = require('fkill')
 const globLib = require('glob')
 
