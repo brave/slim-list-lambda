@@ -33,6 +33,13 @@ bundle:
 	rm -rf $(TMP_WORKSPACE)/node_modules/ad-block/vendor
 	rm -rf $(TMP_WORKSPACE)/node_modules/eslint
 	rm -rf $(TMP_WORKSPACE)/node_modules/eslint-*
+	rm -rf $(TMP_WORKSPACE)/node_modules/@eslint
+	rm -rf $(TMP_WORKSPACE)/node_modules/@eslint-community
+	rm -rf $(TMP_WORKSPACE)/node_modules/@stylistic
+	rm -rf $(TMP_WORKSPACE)/node_modules/@typescript-eslint
+	rm -rf $(TMP_WORKSPACE)/node_modules/typescript
+	rm -rf $(TMP_WORKSPACE)/node_modules/typescript-eslint
+	rm -rf $(TMP_WORKSPACE)/node_modules/neostandard
 	rm -rf $(TMP_WORKSPACE)/node_modules/pluralize
 	rm -rf $(TMP_WORKSPACE)/node_modules/bloom-filter-cpp
 	rm -rf $(TMP_WORKSPACE)/node_modules/regexpp

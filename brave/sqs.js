@@ -7,7 +7,7 @@
 
 const {
   SQS
-} = require("@aws-sdk/client-sqs")
+} = require('@aws-sdk/client-sqs')
 const httpsLib = require('https')
 
 const debugLib = require('./debug')

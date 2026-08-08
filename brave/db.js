@@ -258,7 +258,7 @@ const _idForRequestType = _makeGetIdHashFunc('request_types', 'name')
 
 const recordBatchWithTags = async (client, batch, timestamp, tags) => {
   const batchId = await _insertWithId(client, 'batches', {
-    batch: batch,
+    batch,
     created_on: timestamp
   })
 
@@ -330,7 +330,7 @@ const _idsForRulesForList = async (client, rules, listId) => {
 const recordFilterRules = async (client, filterListUrl, timestamp,
   filterListHash, rules) => {
   const dateId = await _insertWithId(client, 'dates', {
-    timestamp: timestamp
+    timestamp
   })
   const idForExistingFilterList = await _idForExistingFilterList(client, filterListHash)
   if (idForExistingFilterList) {
@@ -371,8 +371,8 @@ const _idForPage = async (client, batch, domain, pageUrl, depth, breath, timesta
     url_id: pageUrlId,
     domain_id: domainId,
     batch_id: batchId,
-    depth: depth,
-    breath: breath,
+    depth,
+    breath,
     crawled_on: timestamp
   })
 }
