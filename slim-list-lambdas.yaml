@@ -390,7 +390,7 @@ Resources:
       Handler: "index.dispatch"
       Runtime: nodejs24.x
       CodeUri: ./build/slim-list-generator.zip
-      Timeout: 600
+      Timeout: 900
       MemorySize: 2048
       Layers:
         - !Sub "arn:aws:lambda:${AWS::Region}:${SentryNodeLayerArnTemplate}"
