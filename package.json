@@ -35,8 +35,8 @@
     "cargo-cp-artifact": "0.1.9"
   },
   "devDependencies": {
-    "eslint": "^9.39.5",
-    "neostandard": "^0.13.0"
+    "eslint": "9.39.5",
+    "neostandard": "0.13.0"
   },
   "allowScripts": {
     "adblock-rs": true
