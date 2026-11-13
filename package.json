@@ -35,7 +35,7 @@
     "cargo-cp-artifact": "0.1.9"
   },
   "devDependencies": {
-    "eslint": "9.39.5",
+    "eslint": "10.14.0",
     "neostandard": "0.14.1"
   },
   "allowScripts": {
