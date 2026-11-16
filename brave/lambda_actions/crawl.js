@@ -3,7 +3,6 @@
 const urlLib = require('url')
 
 const chromiumLib = require('@sparticuz/chromium')
-const puppeteerLib = require('puppeteer-core')
 const randomJsLib = require('random-js')
 const tldjsLib = require('tldjs')
 
@@ -12,6 +11,9 @@ const braveHashLib = require('../hash')
 const braveSQSLib = require('../sqs')
 const braveS3Lib = require('../s3')
 const braveValidationLib = require('../validation')
+
+// puppeteer-core is ESM-only, and the Lambda runtime rejects require() of ES modules.
+let puppeteerLib
 
 /**
  * @file
@@ -301,6 +303,7 @@ const _crawlPage = async (page, args) => {
 }
 
 const start = async args => {
+  puppeteerLib ??= await import('puppeteer-core')
   const browser = await puppeteerLib.launch({
     args: chromiumLib.args,
     defaultViewport: chromiumLib.defaultViewport,
